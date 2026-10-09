@@ -1,0 +1,34 @@
+node_modules
+.next
+next-env.d.ts
+*.tsbuildinfo
+brand-extract
+.impeccable/review
+
+# Secretos y configuración local
+.env
+.env.*
+!.env.example
+.vercel
+.claude/settings.local.json
+
+# Capturas de revisión (pesan decenas de MB) y registros
+capturas
+*.log
+.DS_Store
+
+# Salida de la exportación estática y compilaciones de prueba
+out
+dist
+.build
+
+# Documentos internos (solo en local, no se suben)
+PROMPT.md
+PRODUCT.md
+PENDIENTES.md
+DESIGN.md
+AGENTS.md
+CLAUDE.md
+.claude/
+.impeccable/
+brand/

@@ -1,0 +1,67 @@
+name: Publicar en GitHub Pages
+
+# En cada push a main: instala, compila (sitio estático en out/) y publica en GitHub Pages
+# (equiposcomerciales.fivo.info). También se puede lanzar a mano desde la pestaña Actions.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Un solo despliegue a la vez; uno nuevo sustituye al que esté esperando
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/configure-pages@v5
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Compilar
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SITE_URL: https://equiposcomerciales.fivo.info
+          # Valores reales del sitio: se configuran en GitHub, Settings > Secrets and variables > Actions > Variables.
+          # Vacías, la página usa los sustitutos marcados (vídeo de sustitución, envío simulado, calendario de ejemplo).
+          NEXT_PUBLIC_VIDEO_URL: ${{ vars.NEXT_PUBLIC_VIDEO_URL }}
+          NEXT_PUBLIC_VIDEO_POSTER_URL: ${{ vars.NEXT_PUBLIC_VIDEO_POSTER_URL }}
+          NEXT_PUBLIC_VIDEO_CAPTIONS_URL: ${{ vars.NEXT_PUBLIC_VIDEO_CAPTIONS_URL }}
+          NEXT_PUBLIC_VIDEO_CTA_SECOND: ${{ vars.NEXT_PUBLIC_VIDEO_CTA_SECOND }}
+          NEXT_PUBLIC_THANKS_VIDEO_URL: ${{ vars.NEXT_PUBLIC_THANKS_VIDEO_URL }}
+          NEXT_PUBLIC_THANKS_VIDEO_POSTER_URL: ${{ vars.NEXT_PUBLIC_THANKS_VIDEO_POSTER_URL }}
+          NEXT_PUBLIC_FORM_WEBHOOK_URL: ${{ vars.NEXT_PUBLIC_FORM_WEBHOOK_URL }}
+          NEXT_PUBLIC_CALENDAR_PROVIDER: ${{ vars.NEXT_PUBLIC_CALENDAR_PROVIDER }}
+          NEXT_PUBLIC_CALENDAR_URL: ${{ vars.NEXT_PUBLIC_CALENDAR_URL }}
+          NEXT_PUBLIC_GA4_ID: ${{ vars.NEXT_PUBLIC_GA4_ID }}
+          NEXT_PUBLIC_META_PIXEL_ID: ${{ vars.NEXT_PUBLIC_META_PIXEL_ID }}
+          NEXT_PUBLIC_CONTACT_EMAIL: ${{ vars.NEXT_PUBLIC_CONTACT_EMAIL }}
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
