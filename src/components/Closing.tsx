@@ -15,7 +15,7 @@ export function Closing({ content }: { content: LandingContent }) {
         style={{ backgroundImage: "radial-gradient(ellipse 70% 70% at 50% 110%, var(--color-accent-soft), transparent 70%)" }}
       >
         <GraphMark className="opacity-[0.1]" />
-        <div className="relative mx-auto flex max-w-[900px] flex-col items-center px-5 pb-16 pt-14 text-center lg:px-10 lg:pb-28 lg:pt-24">
+        <div className="relative mx-auto flex max-w-[900px] flex-col items-center px-5 section-pad text-center lg:px-10">
           <h2
             id="cierre"
             className="font-display text-[clamp(1.75rem,1.2rem+2.2vw,3rem)] font-black leading-[1.1] tracking-[-0.015em]"

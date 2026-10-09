@@ -81,7 +81,7 @@ export default function BookingBlock() {
   });
 
   return (
-    <div className="relative mx-auto max-w-[1120px] px-5 py-12 lg:px-10 lg:py-24">
+    <div className="relative mx-auto max-w-[1120px] px-5 section-pad lg:px-10">
       <h2
         id="agendar-titulo"
         tabIndex={-1}

@@ -9,7 +9,7 @@ export function AskSection() {
   const { ask } = useLanding();
   return (
     <section aria-labelledby="preguntale" className="bg-bg">
-      <div className="mx-auto max-w-[1120px] px-5 py-12 lg:px-10 lg:py-24">
+      <div className="mx-auto max-w-[1120px] px-5 section-pad lg:px-10">
         <h2 id="preguntale" className="font-display text-3xl font-black tracking-[-0.015em] sm:text-4xl">
           {ask.title}
         </h2>

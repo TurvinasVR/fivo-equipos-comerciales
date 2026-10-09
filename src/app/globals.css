@@ -1,5 +1,24 @@
 @import "tailwindcss";
 
+/* Escala única de espacios: entre secciones (--section-y arriba y abajo de cada una) y entre el contenido de
+   una sección y su bloque de botón (--cta-gap). Móvil y escritorio; sin paddings sueltos en las secciones. */
+:root {
+  --section-y: 3rem;
+  --cta-gap: 2rem;
+}
+@media (min-width: 1024px) {
+  :root {
+    --section-y: 4rem;
+    --cta-gap: 2.5rem;
+  }
+}
+.section-pad {
+  padding-block: var(--section-y);
+}
+.cta-gap {
+  margin-top: var(--cta-gap);
+}
+
 /* Sistema de diseño de Fivo (ver DESIGN.md). Un solo tema: oscuro, bloqueado.
    Todo color sale de aquí. Las escenas WebGL leen los mismos valores de src/lib/scene/tokens.ts. */
 @theme {

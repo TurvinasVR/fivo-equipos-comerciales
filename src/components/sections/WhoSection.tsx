@@ -24,7 +24,7 @@ function Column({ label, items, tone }: { label: string; items: string[]; tone: 
 export function WhoSection({ who }: { who: Who }) {
   return (
     <section aria-labelledby="para-quien" className="bg-bg">
-      <div className="mx-auto max-w-[1120px] px-5 py-12 lg:px-10 lg:py-24">
+      <div className="mx-auto max-w-[1120px] px-5 section-pad lg:px-10">
         <h2 id="para-quien" className="font-display text-3xl font-black tracking-[-0.015em] sm:text-4xl">
           {who.title}
         </h2>

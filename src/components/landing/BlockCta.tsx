@@ -16,7 +16,7 @@ import { useLanding } from "./LandingContext";
  */
 export function BlockCta({
   position,
-  className = "mt-10",
+  className = "cta-gap",
   visible = true,
 }: {
   position: CtaPosition;
