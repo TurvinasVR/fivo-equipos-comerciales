@@ -79,6 +79,7 @@ export const equiposComerciales: LandingContent = {
         ],
       },
     ],
+    compare: true,
     rows: [
       { topic: "Saber qué pasa en las llamadas", today: "Escuchar grabaciones una a una", fivo: "Preguntar y recibir la respuesta con las llamadas delante" },
       { topic: "Comparar closers", today: "Llamadas hechas y ventas cerradas", fivo: "Qué dice y hace cada uno, y en qué se diferencia del que más cierra" },
