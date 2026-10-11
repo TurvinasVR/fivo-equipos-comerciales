@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Star } from "@phosphor-icons/react";
-import { REVIEWS } from "./reviewsData";
+import { REVIEWS as ALL_REVIEWS } from "./reviewsData";
+
+// Esta landing es de equipos comerciales: la reseña de otro sector (Infoproductores) no se muestra. Los textos no se tocan.
+const OTHER_LANDING_SECTORS = ["Infoproductores"];
+const REVIEWS = ALL_REVIEWS.filter((r) => !OTHER_LANDING_SECTORS.includes(r.sector));
 
 /**
  * Opiniones de la calculadora original (mismas 10, una sola fuente: reviewsData.ts). Se usan bajo el resultado de /gracias y en la landing. Carrusel con scroll nativo: se pasa con el
