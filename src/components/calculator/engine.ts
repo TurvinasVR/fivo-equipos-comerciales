@@ -17,8 +17,6 @@ export type CalculatorHost = {
   callWhen: () => string | null;
   /** Frase de cierre del PDF. */
   disclaimer: string;
-  /** Id de la reserva de meetz (?r= en la URL), o null. Con él no se pide el email. */
-  reservaId: string | null;
   /** Guarda el cálculo en la hoja (resultado / cambio / pdf). No lanza ni espera. */
   save: (evento: "resultado" | "cambio" | "pdf", data: Record<string, string | number>) => void;
 };
@@ -187,25 +185,25 @@ export function initCalculator(root: HTMLElement, host: CalculatorHost): () => v
   function trackParams(){ return {sector: state.sector || "sin_sector", team_size: sizeBucket(members())}; }
   var started = false;
   function markStart(){ if(started) return; started = true; host.track("calculator_start"); }
-  // ---- Hoja de Google: el cálculo se guarda al llegar al resultado, 2 s después de cada cambio y al descargar el PDF ----
+  // ---- Hoja de Google: el cálculo se guarda cada vez que se llega al resultado, 2 s después de cada cambio y al descargar el PDF ----
   function sheetData(r){
-    var emailEl = $("emailReserva"), email = emailEl ? emailEl.value.trim() : "";
-    if(host.reservaId || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) email = "";
-    var secOpt = state.sector ? $("sec-"+state.sector) : null;
+    var sec = state.sector ? $("sec-"+state.sector) : null;
     var sup = [];
-    if(r.rec !== CFG.recDefault) sup.push("Tiempo de búsqueda que recupera: " + pct(r.rec));
-    if(!state.revOn) sup.push("Sin mejora de ventas");
-    else {
-      var defUp = CFG.upliftByReview[state.recCalls] !== undefined ? CFG.upliftByReview[state.recCalls] : CFG.upliftDefault;
-      if(r.uplift !== defUp) sup.push("Mejora de ventas: " + pct(r.uplift));
-    }
-    if(r.subst !== 100) sup.push("Herramientas que Fivo sustituye: " + pct(Math.round(r.subst)));
-    if(!state.audOn) sup.push("Sin análisis externo");
+    if(r.rec !== CFG.recDefault) sup.push("tiempo recuperado " + pct(r.rec));
+    if(!state.revOn) sup.push("sin mejora de ventas"); else if(state.upliftSet) sup.push("mejora de ventas " + pct(r.uplift));
+    if(Math.round(r.subst) !== 100) sup.push("herramientas sustituidas " + pct(Math.round(r.subst)));
+    if(!state.audOn) sup.push("sin análisis externo");
     return {
-      email: email, sector: secOpt ? secOpt.querySelector("span").textContent : "",
+      email: "", sector: sec ? sec.querySelector("span").textContent : "",
       comerciales: r.reps, resto_equipo: r.rest, gasto_anual: r.team, ingresos_anuales: r.calls,
-      herramientas: r.appsM, supuestos: sup.join("; "),
-      ahorro: r.save, ganancia: r.earn, neto_anual: r.net, coste_mes: monthlyCost(r),
+      graba_llamadas: state.recCalls ? optText("recCalls", state.recCalls) : "",
+      revision_externa: state.hasConsult ? optText("hasConsult", state.hasConsult) : "",
+      optimizar_areas: state.optimize ? optText("optimize", state.optimize) : "",
+      gasto_apps_mes: r.appsM,
+      gasto_grabacion_mes: state.appsUnknown ? "no lo sé" : r.appsRepIn,
+      herramientas: group(r.appsM) + " al mes en aplicaciones; " + (state.appsUnknown ? "no sabe cuánto en grabación (estimado " + group(r.subM) + " al mes)" : group(r.appsRepIn) + " al mes en grabación y transcripción"),
+      supuestos: sup.join("; "),
+      ahorro: r.save, ganancia: r.earn, neto_anual: r.net, coste_mes: monthlyCost(r), coste_anual: r.cost,
       facturacion: state.plan==="annual" ? "anual" : "mensual"
     };
   }
@@ -247,7 +245,8 @@ export function initCalculator(root: HTMLElement, host: CalculatorHost): () => v
     var first = n===LAST && !calcDone && compute(state).ready;
     if(first) calcDone = true;
     state.step = n; root.classList.add("anim"); renderSteps(); render();
-    if(first){ revealResult(); host.track("calculator_complete", trackParams()); sheetSend("resultado"); } else if(n!==LAST) announce();
+    if(first){ revealResult(); host.track("calculator_complete", trackParams()); } else if(n!==LAST) announce();
+    if(n===LAST) sheetSend("resultado");
     var f = root.closest("[data-calc-section]") || $("calc"); if(f && f.scrollIntoView) f.scrollIntoView({behavior: reduced?"auto":"smooth", block:"start"});
   }
 
@@ -697,9 +696,6 @@ export function initCalculator(root: HTMLElement, host: CalculatorHost): () => v
   on(root, "input", markStart);
   on(root, "change", markStart);
   on(root, "click", function(e){ if(e.target.closest && e.target.closest("button,label,li")) markStart(); });
-  // Con el id de la reserva (?r=) no se pide el email; si no, el campo es opcional y se manda con el cálculo
-  if(host.reservaId){ var emailBox = $("emailBox"); if(emailBox) emailBox.hidden = true; }
-  if($("emailReserva")) on($("emailReserva"), "input", function(){ if(state.step===LAST) sheetSoon(); });
   LANG = "es"; state.lang = "es";
   applyStatic();
   syncControls();

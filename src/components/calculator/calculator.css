@@ -344,7 +344,7 @@ html.md-open {overflow:hidden}
 .calc .cta {display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 32px;margin-top:24px;padding:28px;border:1px solid var(--line-2);border-radius:var(--r-md);background:color-mix(in srgb, var(--color-grad-a) 8%, transparent)}
 .calc .cta h4 {grid-column:1;margin:0;font-family:var(--font);font-size:24px;font-weight:600;line-height:1.25;letter-spacing:-.015em;text-wrap:balance}
 .calc .rs-small {grid-column:1;margin:0;font-size:15px;line-height:1.45;color:var(--label)}
-.calc .btn-main {grid-column:2;grid-row:1 / span 2;min-height:60px;padding:0 2rem;font-size:1.125rem}
+.calc .btn-main {grid-column:2;grid-row:1;min-height:60px;padding:0 2rem;font-size:1.125rem}
 .calc .btn-main svg {width:20px;height:20px;flex:none}
 .calc .rs-est {grid-column:1/-1;margin:8px 0 0;font-size:13.5px;color:var(--ph)}
 .calc .rs-est .rs-link {color:var(--color-fg)}
@@ -410,16 +410,9 @@ html.md-open {overflow:hidden}
   .calc .btn-main { padding: 0 1rem; font-size: 1rem; }
 }
 
-/* Email de la reserva (solo si /gracias no trae ?r=) y aviso de privacidad bajo el botón del PDF */
-.calc .fv-email { grid-column: 1; grid-row: 2; min-width: 0; }
-.calc .fv-email label { display: block; margin: 0 0 6px; font-size: 13.5px; font-weight: 600; color: var(--color-fg-muted); }
-.calc .fv-field { width: 100%; min-height: 48px; padding: 0 14px; border: 1px solid color-mix(in srgb, var(--color-fg) 14%, transparent); border-radius: var(--r-md); background: color-mix(in srgb, var(--color-fg) 3%, transparent); color: var(--color-fg); font-family: var(--font); font-size: 16px; transition: border-color .15s, box-shadow .15s, background-color .15s; }
-.calc .fv-field::placeholder { color: var(--ph); }
-.calc .fv-field:hover { border-color: color-mix(in srgb, var(--color-fg) 40%, transparent); }
-.calc .fv-field:focus { outline: none; border-color: var(--b1); background: color-mix(in srgb, var(--color-grad-a) 8%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-grad-a) 28%, transparent); }
+/* Aviso de privacidad bajo el botón del PDF */
 .calc .rs-priv { grid-column: 1 / -1; margin: 12px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--color-fg-muted); }
 .calc .rs-priv a { color: var(--color-accent); text-underline-offset: 2px; }
 @media (max-width: 699px) {
-  .calc .fv-email { margin-top: 14px; }
   .calc .rs-priv { margin-top: 10px; }
 }
