@@ -1,7 +1,6 @@
 "use client";
 
 import { Proof } from "../Proof";
-import { BookingSection } from "../booking/BookingSection";
 import { Faq } from "../Faq";
 import { Footer } from "../Footer";
 import { StickyCta } from "../StickyCta";
@@ -27,7 +26,6 @@ export default function BelowFold() {
         <HowItWorks />
         <AskSection />
         <Proof />
-        <BookingSection />
         <Faq />
       </main>
       <div className="relative z-[2]">

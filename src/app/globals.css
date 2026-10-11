@@ -197,6 +197,10 @@ a:hover > .cta-arrow[data-dir="down"],
 button:hover > .cta-arrow[data-dir="down"] {
   transform: translateY(3px);
 }
+a:hover > .cta-arrow[data-dir="right"],
+button:hover > .cta-arrow[data-dir="right"] {
+  transform: translateX(3px);
+}
 a:hover > .cta-arrow[data-dir="up"],
 button:hover > .cta-arrow[data-dir="up"] {
   transform: translateY(-3px);

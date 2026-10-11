@@ -1,16 +1,12 @@
 import { readConsent } from "./consent";
 
-/** Nombres estables. El evento de conversión principal es call_booked. */
+/** Nombres estables. El evento principal es cta_click (position) hacia meetz. */
 export type AnalyticsEvent =
   | "video_play"
   | "video_50"
   | "video_cta_reached"
   | "video_end_cta_view"
   | "cta_click"
-  | "form_start"
-  | "form_view"
-  | "form_submit"
-  | "call_booked"
   | "calculator_start"
   | "calculator_complete"
   | "calculator_pdf"
@@ -40,22 +36,16 @@ export function currentLanding(): Landing {
 const queue: { name: AnalyticsEvent; params: Params }[] = [];
 const onceFired = new Set<string>();
 
-// Equivalentes estándar en Meta. call_booked es la conversión principal.
-const META_STANDARD: Partial<Record<AnalyticsEvent, string>> = {
-  form_submit: "Lead",
-  call_booked: "Schedule",
-};
-
-function dispatch(name: AnalyticsEvent, params: Params) {
+function dispatch(name: AnalyticsEvent, params: Params, beacon = false) {
   window.dataLayer = window.dataLayer ?? [];
   window.dataLayer.push({ event: name, ...params });
-  window.gtag?.("event", name, params);
-  const std = META_STANDARD[name];
-  if (std) window.fbq?.("track", std, params);
+  // Con beacon el envío sobrevive al cambio de página (GA4 usa sendBeacon; el píxel de Meta ya lo hace solo)
+  window.gtag?.("event", name, beacon ? { ...params, transport_type: "beacon" } : params);
   window.fbq?.("trackCustom", name, params);
 }
 
-export function track(name: AnalyticsEvent, extra: Params = {}) {
+/** `beacon: true` para los eventos que se envían justo al cambiar de página (cta_click). */
+export function track(name: AnalyticsEvent, extra: Params = {}, opts: { beacon?: boolean } = {}) {
   if (typeof window === "undefined") return;
   // Todos los eventos llevan el parámetro landing
   const params: Params = { ...extra, landing: currentLanding() };
@@ -65,7 +55,7 @@ export function track(name: AnalyticsEvent, extra: Params = {}) {
     console.debug("[analytics]", name, params);
   }
   const consent = readConsent();
-  if (consent === "granted") dispatch(name, params);
+  if (consent === "granted") dispatch(name, params, opts.beacon);
   else if (consent === null && queue.length < 50) queue.push({ name, params });
 }
 

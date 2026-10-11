@@ -7,25 +7,18 @@ import { CtaHint } from "./CtaBlock";
 
 /**
  * Botón fijo inferior solo en móvil. Se oculta mientras el botón del hero
- * o el bloque del formulario están a la vista (o el botón de un bloque), y mientras hay aviso de cookies.
+ * está a la vista (o el botón de un bloque), y mientras hay aviso de cookies.
  */
 export function StickyCta({ hideNearBlockCtas = false }: { hideNearBlockCtas?: boolean }) {
   const [heroVisible, setHeroVisible] = useState(true);
-  const [formVisible, setFormVisible] = useState(false);
   const [blockVisible, setBlockVisible] = useState(false);
 
   useEffect(() => {
     const hero = document.querySelector("[data-hero-cta]");
-    const form = document.getElementById("agendar");
     const observers: IntersectionObserver[] = [];
     if (hero) {
       const o = new IntersectionObserver(([e]) => setHeroVisible(e.isIntersecting), { threshold: 0 });
       o.observe(hero);
-      observers.push(o);
-    }
-    if (form) {
-      const o = new IntersectionObserver(([e]) => setFormVisible(e.isIntersecting), { threshold: 0.05 });
-      o.observe(form);
       observers.push(o);
     }
     // Landings con el botón repetido al final de cada bloque: el fijo se aparta para no duplicar el degradado
@@ -39,7 +32,7 @@ export function StickyCta({ hideNearBlockCtas = false }: { hideNearBlockCtas?: b
     };
   }, [hideNearBlockCtas]);
 
-  const hidden = heroVisible || formVisible || blockVisible;
+  const hidden = heroVisible || blockVisible;
 
   return (
     <div

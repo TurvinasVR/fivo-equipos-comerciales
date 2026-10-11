@@ -215,38 +215,6 @@ export const equiposComerciales: LandingContent = {
     testimonials: [placeholder, placeholder, placeholder],
   },
 
-  booking: {
-    title: "Elige hora para tu llamada",
-    freeTitle: "Gracias por tu interés",
-    sub: "Te lleva **30 segundos**.",
-    next: ["Eliges día y hora en el calendario.", "Ves la confirmación de tu cita.", "Hablamos **30 minutos** por videollamada."],
-    free: {
-      headline: "Esta llamada es para equipos de **3 o más** closers.",
-      text: "Con uno o dos closers, lo mejor es que empieces gratis por tu cuenta. Si tu equipo crece, aquí estaremos.",
-      cta: "Empieza gratis",
-    },
-    form: {
-      emailLabel: "Email de trabajo",
-      whatsappHelp: "Con prefijo si no es de España.\nPor si necesitamos cambiar la hora de la llamada.",
-      choices: [
-        {
-          name: "closers",
-          label: "Número de closers",
-          control: "cards",
-          options: "closers",
-          layout: "2/4",
-          help: "Esta llamada es para equipos de **3 o más** closers.",
-          error: "Elige cuántos closers sois.",
-          summary: "{label} closers",
-        },
-        { name: "crm", label: "CRM que usáis", control: "select", options: "crm", error: "Elige el CRM que usáis.", placeholder: "Elige una opción", summary: "{label}" },
-        { name: "rol", label: "Tu rol", control: "cards", options: "rol", layout: "1/3", error: "Elige tu rol.", summary: "{label}" },
-      ],
-      submitHint: "Al enviar, eliges día y hora en el calendario.",
-      analytics: { submit: { closers: "closers", crm: "crm", rol: "rol" }, booked: { closers: "closers" } },
-    },
-  },
-
   faq: {
     title: "Preguntas frecuentes",
     items: [

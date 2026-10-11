@@ -1,13 +1,10 @@
 /**
  * Único archivo de configuración de todo lo que depende de servicios externos.
  * Mientras un valor esté vacío, la página funciona con sustitutos marcados.
- * El texto de cada landing está en src/content; las opciones del formulario y la regla
- * de cualificación, en src/config/qualification.ts.
+ * El texto de cada landing está en src/content.
  */
 
 import type { LandingSlug } from "@/content/types";
-
-export type CalendarProvider = "mock" | "calendly" | "cal";
 
 /** Lo que cambia de una landing a otra: vídeos y contenido real disponible. */
 type LandingRuntime = {
@@ -44,12 +41,8 @@ const env = {
   videoPoster: process.env.NEXT_PUBLIC_VIDEO_POSTER_URL?.trim() || "",
   videoCaptions: process.env.NEXT_PUBLIC_VIDEO_CAPTIONS_URL?.trim() || "",
   videoCtaSecond: process.env.NEXT_PUBLIC_VIDEO_CTA_SECOND?.trim() || "",
-  webhook: process.env.NEXT_PUBLIC_FORM_WEBHOOK_URL?.trim() || "",
-  calendarProvider: process.env.NEXT_PUBLIC_CALENDAR_PROVIDER?.trim() || "",
-  calendarUrl: process.env.NEXT_PUBLIC_CALENDAR_URL?.trim() || "",
   ga4: process.env.NEXT_PUBLIC_GA4_ID?.trim() || "",
   metaPixel: process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim() || "",
-  contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim() || "",
 };
 
 /** Vídeo, miniatura y subtítulos de cada landing: URLs externas (nada de vídeo en el repositorio). */
@@ -72,11 +65,7 @@ export const siteConfig = {
   } as Record<LandingSlug, LandingRuntime>,
 
   calendar: {
-    /** "calendly" | "cal" | "mock". Con url vacía se usa siempre "mock". */
-    provider: (env.calendarProvider || "calendly") as CalendarProvider,
-    /** URL de reserva incrustable (Calendly o Cal.com). */
-    url: env.calendarUrl,
-    /** Duración en minutos (también para el .ics). */
+    /** Duración en minutos de la llamada (también para el .ics de /gracias). */
     minutes: 30,
     /**
      * Próximo hueco libre en la línea bajo los botones ("Próximo hueco: mañana a las 10:00").
@@ -86,15 +75,6 @@ export const siteConfig = {
      */
     nextSlot: { enabled: false, startsAtIso: "" },
   },
-
-  /** Webhook que recibe el formulario (POST JSON). Vacío = envío simulado. */
-  formWebhookUrl: env.webhook,
-
-  /** Email del enlace "Escríbenos". Vacío = enlace oculto en producción. */
-  contactEmail: env.contactEmail,
-
-  /** Destino del botón "Empieza gratis" (quien no cumple la regla de cualificación). */
-  freeSignupUrl: "https://fivo.ai",
 
   analytics: {
     ga4Id: env.ga4, // p. ej. G-XXXXXXXXXX
@@ -111,5 +91,3 @@ export const siteConfig = {
     legal: false,
   },
 };
-
-export const calendarIsMock = !siteConfig.calendar.url || siteConfig.calendar.provider === "mock";

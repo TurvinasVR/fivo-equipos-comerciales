@@ -64,21 +64,6 @@ export type AskQuestion = {
   answer: AskAnswer;
 };
 
-export type ChoiceFieldContent = {
-  name: string;
-  label: string;
-  control: "cards" | "select";
-  /** Clave de la lista de opciones en src/config/qualification.ts. */
-  options: string;
-  /** Rejilla de las tarjetas (ver LeadForm). */
-  layout?: "2/4" | "1/3" | "1/3=" | "1/2";
-  help?: string;
-  error: string;
-  placeholder?: string;
-  /** Cómo se resume en el calendario: {label} es la opción elegida. */
-  summary: string;
-};
-
 export type FaqItem = {
   q: string;
   /** Respuesta publicable, solo con hechos ya publicados. Vacía = sin respuesta aún. */
@@ -143,22 +128,6 @@ export type LandingContent = {
     title: string;
     scale: ScaleFigure[];
     testimonials: TestimonialData[];
-  };
-
-  booking: {
-    title: string;
-    freeTitle: string;
-    sub: string;
-    next: string[];
-    free: { headline: string; text: string; cta: string };
-    form: {
-      emailLabel: string;
-      whatsappHelp: string;
-      choices: ChoiceFieldContent[];
-      submitHint: string;
-      /** Parámetros extra de form_submit y de call_booked: nombre del parámetro y campo de donde sale. */
-      analytics: { submit: Record<string, string>; booked: Record<string, string> };
-    };
   };
 
   faq: { title: string; items: FaqItem[] };

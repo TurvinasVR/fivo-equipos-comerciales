@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, CaretDown, ChatCircleText, MagnifyingGlass } from "@phosphor-icons/react";
+import { ArrowRight, CaretDown, ChatCircleText, MagnifyingGlass } from "@phosphor-icons/react";
 import type { AskAnswer, AskQuestion } from "@/content/types";
 import { typeInto, useInView, useReducedMotion } from "@/lib/hooks";
 import { useLanding } from "../landing/LandingContext";
-import { focusBooking } from "../CtaButton";
+import { MEETZ_URL, meetzHref } from "@/lib/meetz";
 import { track } from "@/lib/analytics";
 
 /* ------------------------------------------------------------------ datos */
@@ -220,6 +220,12 @@ export default function AskDemo() {
   const reduced = useReducedMotion();
   const [rootRef, inView] = useInView<HTMLDivElement>({ threshold: 0.35 });
   const [sel, setSel] = useState(0);
+  // Enlace del texto bajo la respuesta: meetz, con los utm_ de la URL si los trae
+  const [href, setHref] = useState(MEETZ_URL);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHref(meetzHref());
+  }, []);
   const [started, setStarted] = useState(false);
   // Estado inicial estático ya pintado (el que ve el HTML del servidor): primera pregunta con su respuesta completa.
   // `armed` indica que la animación está activa: se arma al cargar el JavaScript si la demo aún no se ve, y al elegir pregunta.
@@ -376,20 +382,17 @@ export default function AskDemo() {
             {ask.cta && (
               <div className="mt-2 flex min-h-[44px] items-center">
                 <a
-                  href="#agendar"
+                  href={href}
                   data-cta="pregunta-enlace"
                   tabIndex={phase === "done" ? 0 : -1}
                   inert={phase !== "done" || undefined}
-                  onClick={() => {
-                    track("cta_click", { position: "pregunta-enlace" });
-                    focusBooking();
-                  }}
+                  onClick={() => track("cta_click", { position: "pregunta-enlace" }, { beacon: true })}
                   className="group inline-flex min-h-[44px] items-center gap-2 text-[15px] font-semibold text-accent underline-offset-4 hover:underline"
                   style={{ opacity: phase === "done" ? 1 : 0, transform: phase === "done" ? "none" : "translateY(6px)", transition: "opacity 400ms 500ms, transform 400ms 500ms" }}
                 >
                   {ask.cta}
-                  <span className="cta-arrow" data-dir="down" aria-hidden>
-                    <ArrowDown size={16} weight="bold" className="icon-brand" />
+                  <span className="cta-arrow" data-dir="right" aria-hidden>
+                    <ArrowRight size={16} weight="bold" className="icon-brand" />
                   </span>
                 </a>
               </div>

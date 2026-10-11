@@ -4,7 +4,6 @@ import { useEffect, useSyncExternalStore } from "react";
 import { siteConfig } from "@/config/site";
 import { readConsent, subscribeConsent } from "@/lib/consent";
 import { flushQueue, revokeConsent } from "@/lib/analytics";
-import { captureUtm } from "@/lib/utm";
 
 type FbqStub = ((...args: unknown[]) => void) & {
   callMethod?: (...args: unknown[]) => void;
@@ -28,10 +27,6 @@ function loadScript(src: string) {
 /** Carga GA4 y Meta Pixel solo después de aceptar cookies (RGPD). */
 export function AnalyticsLoader() {
   const consent = useConsent();
-
-  useEffect(() => {
-    captureUtm();
-  }, []);
 
   useEffect(() => {
     if (consent === "denied") {
