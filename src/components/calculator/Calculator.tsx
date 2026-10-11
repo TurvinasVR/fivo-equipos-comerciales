@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { currentLanding, track } from "@/lib/analytics";
-import { readBooking } from "@/lib/booking";
+import { readBooking, readReservaId } from "@/lib/booking";
+import { sendCalculo } from "@/lib/sheet";
 import { CALCULATOR_HTML } from "./markup";
 import "./calculator.css";
 
@@ -31,6 +32,8 @@ export function Calculator({ disclaimer }: { disclaimer: string }) {
         track: (name, params) => track(name, params),
         source: `gracias-${currentLanding()}`,
         disclaimer,
+        reservaId: readReservaId(),
+        save: (evento, data) => sendCalculo(evento, data as Parameters<typeof sendCalculo>[1]),
         callWhen: () => {
           const b = readBooking();
           return b ? callFmt.format(b.startsAt) : null;

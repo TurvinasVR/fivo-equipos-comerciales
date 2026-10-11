@@ -64,3 +64,20 @@ export function readBooking(): BookingInfo | null {
  * calendario" ya está (o no está) en la primera pintura y la página no salta al hidratar.
  */
 export const BOOKING_SNIFF = `try{var q=new URLSearchParams(location.search),k=${JSON.stringify(START_PARAMS)},ok=false;for(var i=0;i<k.length;i++){var v=q.get(k[i]);if(v&&!isNaN(Date.parse(v)))ok=true}if(!ok){var r=sessionStorage.getItem(${JSON.stringify(BOOKING_KEY)});if(r){var b=JSON.parse(r);if(b&&b.startsAt&&!isNaN(Date.parse(b.startsAt)))ok=true}}if(ok)document.documentElement.setAttribute("data-booking","1")}catch(e){}`;
+
+/** Clave de sessionStorage con el id de la reserva de meetz (?r= en la URL de /gracias). */
+const RESERVA_KEY = "fivo-reserva";
+
+/** El id de la reserva: el ?r= de la URL (se guarda mientras dure la visita) o, si no viene, el guardado. */
+export function readReservaId(): string | null {
+  try {
+    const r = new URLSearchParams(window.location.search).get("r")?.trim().slice(0, 100);
+    if (r) {
+      window.sessionStorage.setItem(RESERVA_KEY, r);
+      return r;
+    }
+    return window.sessionStorage.getItem(RESERVA_KEY);
+  } catch {
+    return null;
+  }
+}

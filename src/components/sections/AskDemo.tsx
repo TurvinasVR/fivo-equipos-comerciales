@@ -5,7 +5,7 @@ import { ArrowRight, CaretDown, ChatCircleText, MagnifyingGlass } from "@phospho
 import type { AskAnswer, AskQuestion } from "@/content/types";
 import { typeInto, useInView, useReducedMotion } from "@/lib/hooks";
 import { useLanding } from "../landing/LandingContext";
-import { MEETZ_URL, meetzHref } from "@/lib/meetz";
+import { meetzHref } from "@/lib/meetz";
 import { track } from "@/lib/analytics";
 
 /* ------------------------------------------------------------------ datos */
@@ -221,7 +221,7 @@ export default function AskDemo() {
   const [rootRef, inView] = useInView<HTMLDivElement>({ threshold: 0.35 });
   const [sel, setSel] = useState(0);
   // Enlace del texto bajo la respuesta: meetz, con los utm_ de la URL si los trae
-  const [href, setHref] = useState(MEETZ_URL);
+  const [href, setHref] = useState(() => meetzHref(""));
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setHref(meetzHref());

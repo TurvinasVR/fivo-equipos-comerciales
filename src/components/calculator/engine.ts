@@ -17,6 +17,10 @@ export type CalculatorHost = {
   callWhen: () => string | null;
   /** Frase de cierre del PDF. */
   disclaimer: string;
+  /** Id de la reserva de meetz (?r= en la URL), o null. Con él no se pide el email. */
+  reservaId: string | null;
+  /** Guarda el cálculo en la hoja (resultado / cambio / pdf). No lanza ni espera. */
+  save: (evento: "resultado" | "cambio" | "pdf", data: Record<string, string | number>) => void;
 };
 
 export function initCalculator(root: HTMLElement, host: CalculatorHost): () => void {
@@ -183,6 +187,41 @@ export function initCalculator(root: HTMLElement, host: CalculatorHost): () => v
   function trackParams(){ return {sector: state.sector || "sin_sector", team_size: sizeBucket(members())}; }
   var started = false;
   function markStart(){ if(started) return; started = true; host.track("calculator_start"); }
+  // ---- Hoja de Google: el cálculo se guarda al llegar al resultado, 2 s después de cada cambio y al descargar el PDF ----
+  function sheetData(r){
+    var emailEl = $("emailReserva"), email = emailEl ? emailEl.value.trim() : "";
+    if(host.reservaId || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) email = "";
+    var secOpt = state.sector ? $("sec-"+state.sector) : null;
+    var sup = [];
+    if(r.rec !== CFG.recDefault) sup.push("Tiempo de búsqueda que recupera: " + pct(r.rec));
+    if(!state.revOn) sup.push("Sin mejora de ventas");
+    else {
+      var defUp = CFG.upliftByReview[state.recCalls] !== undefined ? CFG.upliftByReview[state.recCalls] : CFG.upliftDefault;
+      if(r.uplift !== defUp) sup.push("Mejora de ventas: " + pct(r.uplift));
+    }
+    if(r.subst !== 100) sup.push("Herramientas que Fivo sustituye: " + pct(Math.round(r.subst)));
+    if(!state.audOn) sup.push("Sin análisis externo");
+    return {
+      email: email, sector: secOpt ? secOpt.querySelector("span").textContent : "",
+      comerciales: r.reps, resto_equipo: r.rest, gasto_anual: r.team, ingresos_anuales: r.calls,
+      herramientas: r.appsM, supuestos: sup.join("; "),
+      ahorro: r.save, ganancia: r.earn, neto_anual: r.net, coste_mes: monthlyCost(r),
+      facturacion: state.plan==="annual" ? "anual" : "mensual"
+    };
+  }
+  var sheetSig = null, sheetTimer = null;
+  function sheetSend(evento){
+    var r = compute(state); if(!r.ready) return;
+    clearTimeout(sheetTimer);
+    var d = sheetData(r); sheetSig = JSON.stringify(d);
+    try { host.save(evento, d); } catch(e) { /* nada debe frenar la calculadora */ }
+  }
+  function sheetSoon(){
+    if(sheetSig === null) return;
+    var r = compute(state); if(!r.ready || JSON.stringify(sheetData(r)) === sheetSig) return;
+    clearTimeout(sheetTimer);
+    sheetTimer = setTimeout(function(){ sheetSend("cambio"); }, 2000); timers.push(sheetTimer);
+  }
   function canNext1(r){ return r.people>=1 && r.team>0; }
 
   var maxStep = 1;
@@ -208,7 +247,7 @@ export function initCalculator(root: HTMLElement, host: CalculatorHost): () => v
     var first = n===LAST && !calcDone && compute(state).ready;
     if(first) calcDone = true;
     state.step = n; root.classList.add("anim"); renderSteps(); render();
-    if(first){ revealResult(); host.track("calculator_complete", trackParams()); } else if(n!==LAST) announce();
+    if(first){ revealResult(); host.track("calculator_complete", trackParams()); sheetSend("resultado"); } else if(n!==LAST) announce();
     var f = root.closest("[data-calc-section]") || $("calc"); if(f && f.scrollIntoView) f.scrollIntoView({behavior: reduced?"auto":"smooth", block:"start"});
   }
 
@@ -271,6 +310,7 @@ export function initCalculator(root: HTMLElement, host: CalculatorHost): () => v
       : tr("noteM",{s:eur(r.costMonthly - r.costAnnual), n:eur(r.netIfAnnual)});
     announce();
     renderTable(r);
+    sheetSoon();
     return r;
   }
 
@@ -538,6 +578,7 @@ export function initCalculator(root: HTMLElement, host: CalculatorHost): () => v
     if(pdfBusy) return;
     var model = pdfModel();
     if(!model){ msg(tr("needData"), true); return; }
+    sheetSend("pdf");
     pdfBusy = true; clearTimeout(pdfTimer);
     pdfBtns().forEach(function(b){ b.disabled = true; b.setAttribute("aria-busy", "true"); pdfLabel(b, tr("pdfPreparing")); });
     $("srStatus").textContent = tr("pdfPreparing");
@@ -656,6 +697,9 @@ export function initCalculator(root: HTMLElement, host: CalculatorHost): () => v
   on(root, "input", markStart);
   on(root, "change", markStart);
   on(root, "click", function(e){ if(e.target.closest && e.target.closest("button,label,li")) markStart(); });
+  // Con el id de la reserva (?r=) no se pide el email; si no, el campo es opcional y se manda con el cálculo
+  if(host.reservaId){ var emailBox = $("emailBox"); if(emailBox) emailBox.hidden = true; }
+  if($("emailReserva")) on($("emailReserva"), "input", function(){ if(state.step===LAST) sheetSoon(); });
   LANG = "es"; state.lang = "es";
   applyStatic();
   syncControls();

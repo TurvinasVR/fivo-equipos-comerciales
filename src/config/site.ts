@@ -76,6 +76,9 @@ export const siteConfig = {
     nextSlot: { enabled: false, startsAtIso: "" },
   },
 
+  /** Google Apps Script que guarda en la hoja los cálculos de /gracias (unidos a la reserva de meetz por ?r=). */
+  calculatorSheetUrl: "https://script.google.com/macros/s/AKfycbzllKUnAnPfo0AwD9wQGB8DCpqio1Qkq6gdsl2pnLAZs67GpBb_rJqLWeAleILaifwsLA/exec",
+
   analytics: {
     ga4Id: env.ga4, // p. ej. G-XXXXXXXXXX
     metaPixelId: env.metaPixel,

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight } from "@phosphor-icons/react";
 import { track } from "@/lib/analytics";
-import { MEETZ_URL, meetzHref } from "@/lib/meetz";
+import { meetzHref } from "@/lib/meetz";
 
 export const CTA_LABEL = "Agendar mi llamada";
 
@@ -55,7 +55,7 @@ export function CtaButton({
 }: Props) {
   const ref = useRef<HTMLAnchorElement>(null);
   // En el HTML va el enlace tal cual; con los utm_ de la URL se completa al cargar
-  const [href, setHref] = useState(MEETZ_URL);
+  const [href, setHref] = useState(() => meetzHref(""));
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setHref(meetzHref());
