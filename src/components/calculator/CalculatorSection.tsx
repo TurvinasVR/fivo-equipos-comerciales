@@ -48,11 +48,11 @@ export function CalculatorSection({ title, intro, resultTitle, disclaimer }: { t
       </div>
       {result && (
         <>
-          <Reviews />
-          <div className="mt-8 lg:mt-12">
+          <div className="mt-2 lg:mt-6">
             <p className="mb-2 text-center text-[12px] font-medium text-fg-muted">Clientes de Fivo</p>
             <ClientLogos />
           </div>
+          <Reviews className="mt-8 lg:mt-[41px]" />
         </>
       )}
     </section>
