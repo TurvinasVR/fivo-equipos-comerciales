@@ -14,7 +14,8 @@ export type AnalyticsEvent =
   | "calculator_start"
   | "calculator_complete"
   | "calculator_pdf"
-  | "calculator_report_sent";
+  | "calculator_report_sent"
+  | "calendar_add";
 
 type Params = Record<string, string | number | boolean | undefined>;
 

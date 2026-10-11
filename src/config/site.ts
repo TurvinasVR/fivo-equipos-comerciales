@@ -25,13 +25,11 @@ type LandingRuntime = {
      */
     ctaSecond: number | null;
   };
-  /** Vídeo de 60 segundos de la página de gracias. Vacío = hueco marcado. */
-  thanksVideo: { src: string; poster: string };
   /**
    * Contenido real disponible. Mientras sea false, el bloque se ve con un
    * marcador solo en desarrollo y se oculta en producción (ver PENDIENTES.md).
    */
-  ready: { video: boolean; testimonials: boolean; thanksVideo: boolean };
+  ready: { video: boolean; testimonials: boolean };
 };
 
 /**
@@ -46,8 +44,6 @@ const env = {
   videoPoster: process.env.NEXT_PUBLIC_VIDEO_POSTER_URL?.trim() || "",
   videoCaptions: process.env.NEXT_PUBLIC_VIDEO_CAPTIONS_URL?.trim() || "",
   videoCtaSecond: process.env.NEXT_PUBLIC_VIDEO_CTA_SECOND?.trim() || "",
-  thanksVideoUrl: process.env.NEXT_PUBLIC_THANKS_VIDEO_URL?.trim() || "",
-  thanksVideoPoster: process.env.NEXT_PUBLIC_THANKS_VIDEO_POSTER_URL?.trim() || "",
   webhook: process.env.NEXT_PUBLIC_FORM_WEBHOOK_URL?.trim() || "",
   calendarProvider: process.env.NEXT_PUBLIC_CALENDAR_PROVIDER?.trim() || "",
   calendarUrl: process.env.NEXT_PUBLIC_CALENDAR_URL?.trim() || "",
@@ -64,8 +60,7 @@ const landingRuntime = (): LandingRuntime => ({
     captions: env.videoCaptions,
     ctaSecond: env.videoCtaSecond === "" ? 10 : env.videoCtaSecond === "none" ? null : Number(env.videoCtaSecond) || 10,
   },
-  thanksVideo: { src: env.thanksVideoUrl, poster: env.thanksVideoPoster },
-  ready: { video: Boolean(env.videoUrl), testimonials: false, thanksVideo: Boolean(env.thanksVideoUrl) },
+  ready: { video: Boolean(env.videoUrl), testimonials: false },
 });
 
 export const siteConfig = {
