@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { PendingTag } from "@/components/PendingTag";
 
 const PAGES: Record<string, string> = {
   "aviso-legal": "Aviso legal",
@@ -26,9 +25,6 @@ export default async function Legal({ params }: { params: Promise<{ slug: string
     <main className="mx-auto max-w-[720px] px-5 py-16">
       <h1 className="font-display text-3xl font-black">{title}</h1>
       <p className="mt-4 text-fg-muted">El texto legal de esta página está pendiente de redacción y revisión.</p>
-      <p className="mt-4">
-        <PendingTag>texto legal definitivo (ver PENDIENTES.md)</PendingTag>
-      </p>
     </main>
   );
 }

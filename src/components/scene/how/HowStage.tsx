@@ -447,13 +447,13 @@ export default function HowStage({ toolIds, scene, getT, staticT, use3d, onFrame
               <span className="h-2 w-2 rounded-full bg-fg-muted" />
               {scene.callTitle}
             </span>
-            <span className="inline-flex items-center gap-1.5 text-fg-muted"><i aria-hidden className="status-dot text-accent" />Ejemplo</span>
+            <span className="inline-flex items-center gap-1.5 text-fg-muted"><i aria-hidden className="status-dot status-dot--brand" />Ejemplo</span>
           </div>
 
           <div className={`grid grid-cols-5 ${compact ? "gap-1.5" : "gap-2.5"}`}>
             {INITIALS.map((ini, k) => (
               <div key={ini} ref={set(R.current.tiles, k)} className="group flex aspect-square items-center justify-center rounded-[12px] border border-line bg-bg data-[speaking='1']:border-accent" style={{ opacity: 0 }}>
-                <span className="flex h-[58%] w-[58%] items-center justify-center rounded-full bg-accent font-sans text-sm font-bold text-bg">
+                <span className="flex h-[58%] w-[58%] items-center justify-center rounded-full bg-brand font-sans text-sm font-bold text-bg">
                   {ini}
                 </span>
               </div>
@@ -469,7 +469,7 @@ export default function HowStage({ toolIds, scene, getT, staticT, use3d, onFrame
 
           <div className="mt-2 flex h-8 items-center justify-center gap-[3px]">
             {Array.from({ length: compact ? 26 : 38 }, (_, i) => (
-              <span key={i} ref={set(R.current.bars, i)} className="h-full w-[3px] origin-center rounded-full bg-accent" style={{ transform: "scaleY(0.12)" }} />
+              <span key={i} ref={set(R.current.bars, i)} className="h-full w-[3px] origin-center rounded-full bg-brand-y" style={{ transform: "scaleY(0.12)" }} />
             ))}
           </div>
 
@@ -478,7 +478,7 @@ export default function HowStage({ toolIds, scene, getT, staticT, use3d, onFrame
               {TRANSCRIPT.map((l, j) => (
                 <p key={j} className="flex items-start gap-2.5">
                   <span aria-hidden className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-accent">
-                    <i className="status-dot text-accent" />
+                    <i className="status-dot status-dot--brand" />
                   </span>
                   <span>
                     <span className="font-semibold text-fg">{l.who}: </span>
@@ -524,15 +524,15 @@ export default function HowStage({ toolIds, scene, getT, staticT, use3d, onFrame
               <img src="/logos/fivo-mark.svg" alt="" width={12} height={14} className="h-[14px] w-[12px]" />
               Fivo Chat
             </span>
-            <span className="inline-flex items-center gap-1.5 text-fg-muted"><i aria-hidden className="status-dot text-accent" />Ejemplo</span>
+            <span className="inline-flex items-center gap-1.5 text-fg-muted"><i aria-hidden className="status-dot status-dot--brand" />Ejemplo</span>
           </div>
           <div ref={(e) => { R.current.qBubble = e; }} className="ml-auto max-w-[92%] rounded-[12px] bg-accent-soft px-3.5 py-2.5 text-[13px] font-medium leading-snug text-fg sm:text-sm" style={{ minHeight: 40, opacity: 0 }}>
             <span ref={(e) => { R.current.q = e; }} />
           </div>
           <div ref={(e) => { R.current.dots = e; }} className="mt-3 flex gap-1.5 pl-1" style={{ opacity: 0, height: 10 }}>
-            <span className="h-2 w-2 rounded-full bg-accent" />
-            <span className="h-2 w-2 rounded-full bg-accent" />
-            <span className="h-2 w-2 rounded-full bg-accent" />
+            <span className="h-2 w-2 rounded-full bg-brand" />
+            <span className="h-2 w-2 rounded-full bg-brand" />
+            <span className="h-2 w-2 rounded-full bg-brand" />
           </div>
           <div ref={(e) => { R.current.ansBox = e; }} className="relative mt-3 text-[13px] leading-snug text-fg-muted" style={{ opacity: 0, minHeight: compact ? 148 : 140 }}>
             <p ref={set(R.current.ans, 0)} />

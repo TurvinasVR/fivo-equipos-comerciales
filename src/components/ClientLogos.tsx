@@ -1,9 +1,10 @@
-import Image from "next/image";
-
 /**
  * Clientes que aparecen en fivo.ai (y en el prompt). Logos descargados de
  * fivo.ai, sin modificar salvo el redimensionado. Se pintan en blanco
  * monocromo para el tema oscuro. Solo logos, sin etiquetas.
+ *
+ * Van en el HTML desde el principio, con prioridad baja (no compiten con el póster del vídeo, que es el LCP). El hueco de
+ * cada logo está reservado (ancho y alto en CSS), así que no hay salto.
  */
 const CLIENTS = [
   { name: "Catalana Occidente", file: "Catalana_Occidente_Logo.webp", w: 480, h: 229, height: 40 },
@@ -25,14 +26,17 @@ export function ClientLogos() {
     >
       {CLIENTS.map((c) => (
         <li key={c.name} className="flex items-center">
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src={`/logos/clients/${c.file}`}
             alt={c.name}
             width={c.w}
             height={c.h}
-            sizes="120px"
-            className="logo-mono h-[calc(var(--lh)*0.55*1px)] w-auto opacity-70 sm:h-[calc(var(--lh)*0.8*1px)] xl:h-[calc(var(--lh)*1px)]"
-            style={{ "--lh": c.height } as React.CSSProperties}
+            decoding="async"
+            loading="eager"
+            fetchPriority="low"
+            className="logo-mono h-[calc(var(--lh)*0.55*1px)] w-[calc(var(--lh)*0.55*1px*var(--ar))] opacity-70 sm:h-[calc(var(--lh)*0.8*1px)] sm:w-[calc(var(--lh)*0.8*1px*var(--ar))] xl:h-[calc(var(--lh)*1px)] xl:w-[calc(var(--lh)*1px*var(--ar))]"
+            style={{ "--lh": c.height, "--ar": c.w / c.h } as React.CSSProperties}
           />
         </li>
       ))}

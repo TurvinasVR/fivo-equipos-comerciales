@@ -8,7 +8,6 @@ import type { LandingSlug } from "@/content/types";
 import { track, trackOnce } from "@/lib/analytics";
 import { CtaButton } from "./CtaButton";
 import { CtaHint } from "./CtaBlock";
-import { PendingTag } from "./PendingTag";
 
 type Props = {
   src: string;
@@ -23,7 +22,6 @@ type Props = {
   label: string;
   /** Pantalla final: titular y botón de repetir. Sin esto, el vídeo termina sin pantalla final. */
   endCta?: { title: string; replay: string };
-  pendingNote?: string;
   className?: string;
 };
 
@@ -36,7 +34,6 @@ export function VideoPlayer({
   ctaSecond = null,
   label,
   endCta,
-  pendingNote,
   className = "",
 }: Props) {
   const ref = useRef<HTMLVideoElement>(null);
@@ -232,12 +229,6 @@ export function VideoPlayer({
         </div>
       )}
 
-      {pendingNote && (
-        <div className="pointer-events-none absolute left-3 top-14 z-20 sm:left-4 sm:top-16">
-          <PendingTag>{pendingNote}</PendingTag>
-        </div>
-      )}
-
       {/* Controles: pausar, sonido y subtítulos */}
       <div inert={ended || undefined} className="absolute right-2 top-2 z-20 flex items-center gap-0.5 rounded-full bg-glass p-0.5 backdrop-blur-sm sm:right-3 sm:top-3">
         <button
@@ -269,7 +260,7 @@ export function VideoPlayer({
       </div>
 
       <div className="absolute inset-x-0 bottom-0 z-20 h-[3px] bg-fg/15" aria-hidden>
-        <div className="h-full bg-accent" style={{ width: `${progress * 100}%` }} />
+        <div className="bg-brand-x h-full" style={{ width: `${progress * 100}%` }} />
       </div>
       {endCta && ended && (
         <div
@@ -297,7 +288,7 @@ export function VideoPlayer({
 
 /** Configuración del VSL principal de cada landing, con sustitutos mientras no haya vídeo real. */
 export function MainVsl({ slug, label, endCta }: { slug: LandingSlug; label: string; endCta?: { title: string; replay: string } }) {
-  const { video, ready } = siteConfig.landings[slug];
+  const { video } = siteConfig.landings[slug];
   return (
     <VideoPlayer
       src={video.src || "/video/placeholder.mp4"}
@@ -308,7 +299,6 @@ export function MainVsl({ slug, label, endCta }: { slug: LandingSlug; label: str
       ctaSecond={video.ctaSecond}
       label={label}
       endCta={endCta}
-      pendingNote={ready.video ? undefined : "vídeo de sustitución"}
     />
   );
 }

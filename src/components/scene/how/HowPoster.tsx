@@ -82,14 +82,14 @@ export function HowPoster({ k, toolIds, scene, compact = false }: { k: 0 | 1 | 2
                   {scene.callTitle}
                 </span>
                 <span className="inline-flex items-center gap-1.5 text-fg-muted">
-                  <i aria-hidden className="status-dot text-accent" />
+                  <i aria-hidden className="status-dot status-dot--brand" />
                   Ejemplo
                 </span>
               </div>
               <div className={`grid grid-cols-5 ${compact ? "gap-1.5" : "gap-2.5"}`}>
                 {scene.initials.map((ini) => (
                   <div key={ini} className="flex aspect-square items-center justify-center rounded-[12px] border border-line bg-bg">
-                    <span className="flex h-[58%] w-[58%] items-center justify-center rounded-full bg-accent font-sans text-sm font-bold text-bg">{ini}</span>
+                    <span className="flex h-[58%] w-[58%] items-center justify-center rounded-full bg-brand font-sans text-sm font-bold text-bg">{ini}</span>
                   </div>
                 ))}
                 <div className="flex aspect-square items-center justify-center rounded-[12px] border border-accent/70 bg-bg">
@@ -121,7 +121,7 @@ export function HowPoster({ k, toolIds, scene, compact = false }: { k: 0 | 1 | 2
                   Fivo Chat
                 </span>
                 <span className="inline-flex items-center gap-1.5 text-fg-muted">
-                  <i aria-hidden className="status-dot text-accent" />
+                  <i aria-hidden className="status-dot status-dot--brand" />
                   Ejemplo
                 </span>
               </div>

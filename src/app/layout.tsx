@@ -6,6 +6,7 @@ import { landingMetadata } from "@/content/meta";
 import { ACTIVE_LANDING } from "@/lib/activeLanding";
 import { AnalyticsLoader } from "@/components/AnalyticsLoader";
 import { CookieBanner } from "@/components/CookieBanner";
+import { BrandIcons } from "@/components/BrandIcons";
 
 // Manrope: toda la interfaz (sistema de diseño de Fivo). next/font la autoaloja en el build.
 const manrope = Manrope({
@@ -43,9 +44,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es" className={`${manrope.variable} ${satoshi.variable}`}>
       <body>
         {/* El aviso va el primero en el DOM (es fixed, no cambia dónde se ve) para ser lo primero en el orden de tabulación */}
+        {/* Degradado de marca para los iconos (.icon-brand) */}
+        <svg aria-hidden width="0" height="0" className="absolute">
+          <defs>
+            <linearGradient id="fivo-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="var(--color-grad-a)" />
+              <stop offset="1" stopColor="var(--color-grad-b)" />
+            </linearGradient>
+          </defs>
+        </svg>
         <CookieBanner />
         {children}
         <AnalyticsLoader />
+        <BrandIcons />
       </body>
     </html>
   );

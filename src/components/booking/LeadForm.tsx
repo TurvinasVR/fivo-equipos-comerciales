@@ -8,7 +8,6 @@ import type { LandingContent } from "@/content/types";
 import { track } from "@/lib/analytics";
 import { lines, rich } from "@/lib/rich";
 import { captureUtm } from "@/lib/utm";
-import { PendingTag } from "../PendingTag";
 import { SUBMIT_LABEL } from "../CtaButton";
 import { useLanding } from "../landing/LandingContext";
 
@@ -277,11 +276,6 @@ export function LeadForm({ values, onChange, onSubmitted }: Props) {
           {status === "submitting" ? "Enviando" : SUBMIT_LABEL}
         </button>
         <p className="mt-3 text-center text-sm text-fg-muted">{formContent.submitHint}</p>
-        {!siteConfig.formWebhookUrl && (
-          <p className="mt-2 text-center">
-            <PendingTag>sin webhook, envío simulado (formWebhookUrl)</PendingTag>
-          </p>
-        )}
       </div>
     </form>
   );

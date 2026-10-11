@@ -32,7 +32,6 @@ export const equiposComerciales: LandingContent = {
       "Fivo une las llamadas de tu equipo, tu CRM y tu correo en un grafo de contexto, y te dice qué hace distinto el que cierra. Sin escuchar ni una grabación.",
     videoLabel: "Vídeo de Fivo para equipos comerciales",
     videoEnd: { title: "¿Lo vemos con tu equipo?", replay: "Volver a ver" },
-    proof: "logos",
     trust: "Cumple RGPD y SOC 2. Datos alojados en la UE. Tú decides quién ve cada llamada.",
   },
 
@@ -213,27 +212,7 @@ export const equiposComerciales: LandingContent = {
   proof: {
     title: "Fivo ya funciona a esta escala",
     scale: SCALE,
-    logos: false,
     testimonials: [placeholder, placeholder, placeholder],
-  },
-
-  agenda: {
-    title: "Qué pasa en los 30 minutos",
-    segments: [
-      { range: "0 a 10 min", text: "Vemos cómo trabaja hoy tu equipo." },
-      { range: "10 a 25 min", text: "Te enseñamos Fivo con un caso como el tuyo." },
-      { range: "25 a 30 min", text: "Te decimos con claridad si te encaja o no." },
-    ],
-    srList: [
-      "Vemos cómo trabaja hoy tu equipo.",
-      "Te enseñamos Fivo con un caso como el tuyo.",
-      "Te decimos con claridad si te encaja o no.",
-      "30 minutos, por videollamada, sin compromiso. No es para ti si vendes tú solo o con un único closer.",
-    ],
-    askText: "¿Qué hace distinto el que cierra?",
-    fork: ["Encaja", "No encaja"],
-    facts: ["30 minutos", "Por videollamada", "Sin compromiso"],
-    note: "No es para ti si vendes tú solo o con un único closer.",
   },
 
   booking: {
@@ -296,14 +275,17 @@ export const equiposComerciales: LandingContent = {
     ],
   },
 
-  closing: { title: "Tu próximo mejor closer ya está en tu equipo. Solo le falta saber qué cambiar." },
+  footer: {
+    disclaimer: "Los resultados dependen de cada negocio y no están garantizados.",
+  },
 
   thanks: {
     title: "Tu llamada está agendada",
-    prepTitle: "Para aprovechar la llamada",
-    prepIntro: "Ten a mano:",
-    prep: ["Qué herramientas usa tu equipo", "Cuántos closers tienes", "Qué quieres resolver primero"],
-    videoLabel: "Vídeo de 60 segundos antes de la llamada",
     ics: { prodid: "-//Fivo//Llamada equipos comerciales//ES" },
+    calculator: {
+      title: "Mientras llega la llamada, calcula cuánto te ahorraría Fivo",
+      intro: "Tráelo a la llamada y lo vemos con tus números.",
+      resultTitle: "Esto es lo que Fivo podría sumar a tu equipo cada año",
+    },
   },
 };

@@ -182,7 +182,7 @@ function AnswerTimeline({ q, a, parts }: { q: Q; a: Extract<AskAnswer, { kind: "
         <span aria-hidden className="absolute bottom-2 left-[2px] top-2 w-px bg-line-strong" />
         {a.events.map((e, i) => (
           <li key={e.label} className={`relative flex gap-3.5 ${vis(parts >= i + 2)}`}>
-            <i aria-hidden className={`status-dot relative z-[1] mt-[7px] ${i === a.events.length - 1 ? "text-danger" : "text-accent"}`} />
+            <i aria-hidden className={`status-dot relative z-[1] mt-[7px] ${i === a.events.length - 1 ? "text-danger" : "status-dot--brand"}`} />
             <span className="grid gap-0.5">
               <span className="text-[13px] font-semibold text-fg">{e.label}</span>
               <span className="text-[14px] leading-snug text-fg-muted">{e.detail}</span>
@@ -318,10 +318,10 @@ export default function AskDemo() {
               aria-pressed={on}
               onClick={() => pick(i)}
               className={`flex min-h-[64px] w-full cursor-pointer items-start gap-3 rounded-[12px] border p-4 text-left text-[15px] leading-snug transition-colors duration-200 ${
-                on ? "border-accent bg-accent-soft text-fg" : "border-line bg-surface text-fg-muted hover:border-line-strong hover:text-fg"
+                on ? "sel-brand text-fg" : "border-line bg-surface text-fg-muted hover:border-line-strong hover:text-fg"
               }`}
             >
-              <ChatCircleText size={20} weight={on ? "fill" : "regular"} className={`mt-0.5 shrink-0 ${on ? "text-accent" : "text-fg-muted"}`} aria-hidden />
+              <ChatCircleText size={20} weight={on ? "fill" : "regular"} className={`mt-0.5 shrink-0 ${on ? "icon-brand" : "text-fg-muted"}`} aria-hidden />
               {it.q}
             </button>
           );
@@ -336,7 +336,7 @@ export default function AskDemo() {
             <img src="/logos/fivo-mark.svg" alt="" width={13} height={15} className="h-[15px] w-[13px]" />
             Fivo Chat
           </span>
-          <span className="inline-flex items-center gap-1.5 text-fg-muted"><i aria-hidden className="status-dot text-accent" />Ejemplo</span>
+          <span className="inline-flex items-center gap-1.5 text-fg-muted"><i aria-hidden className="status-dot status-dot--brand" />Ejemplo</span>
         </div>
 
         <div className="ask-grid">
@@ -362,7 +362,7 @@ export default function AskDemo() {
                 {ask.searching}
                 <span className="flex gap-1">
                   {[0, 1, 2].map((d) => (
-                    <i key={d} className="h-1.5 w-1.5 rounded-full bg-accent" style={{ animation: searching && !reduced ? `ask-dot 900ms ${d * 140}ms infinite` : "none" }} />
+                    <i key={d} className="h-1.5 w-1.5 rounded-full bg-brand" style={{ animation: searching && !reduced ? `ask-dot 900ms ${d * 140}ms infinite` : "none" }} />
                   ))}
                 </span>
               </div>
@@ -389,7 +389,7 @@ export default function AskDemo() {
                 >
                   {ask.cta}
                   <span className="cta-arrow" data-dir="down" aria-hidden>
-                    <ArrowDown size={16} weight="bold" />
+                    <ArrowDown size={16} weight="bold" className="icon-brand" />
                   </span>
                 </a>
               </div>
@@ -413,7 +413,7 @@ export default function AskDemo() {
                 >
                   <span className="flex items-center justify-between gap-2">
                     <span className="flex items-center gap-1.5 font-medium">
-                      <span className="h-2 w-2 shrink-0 rounded-full bg-accent" />
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-brand" />
                       {q.sourceLabel ?? "Llamada"} {i + 1}
                     </span>
                     <CaretDown size={14} className="shrink-0 text-fg-muted transition-transform duration-300" style={{ transform: folded[i] ? "none" : "rotate(180deg)" }} aria-hidden />

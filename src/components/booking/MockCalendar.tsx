@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { CalendarCheck, Globe } from "@phosphor-icons/react";
 import { siteConfig } from "@/config/site";
-import { PendingTag } from "../PendingTag";
 
 const SLOTS_BY_DAY = [
   ["10:00", "11:30", "13:00", "16:00", "17:30"],
@@ -56,11 +55,10 @@ export function MockCalendar({ onBooked }: { onBooked: (startsAtIso: string) => 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-fg-muted">
         <strong className="inline-flex items-center gap-2 font-semibold text-warn"><i aria-hidden className="status-dot" />Calendario de ejemplo.</strong>
         <span>Los horarios no son reales y no se reserva nada.</span>
-        <PendingTag>configura calendar.url en src/config/site.ts</PendingTag>
       </div>
 
       <div className="mt-5 flex items-center gap-2 text-[14px] text-fg-muted">
-        <Globe size={18} className="text-accent" aria-hidden />
+        <Globe size={18} className="icon-brand" aria-hidden />
         Hora de España (Europe/Madrid)
       </div>
 

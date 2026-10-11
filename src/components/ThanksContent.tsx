@@ -53,7 +53,6 @@ function downloadIcs(b: Booking, prodid: string) {
 export function ThanksContent({ content }: { content: LandingContent }) {
   const { slug, thanks, proof } = content;
   const rt = siteConfig.landings[slug];
-  const PREP = thanks.prep;
   const [booking, setBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
@@ -67,9 +66,6 @@ export function ThanksContent({ content }: { content: LandingContent }) {
   }, []);
 
   const when = booking?.startsAt ? whenFmt.format(new Date(booking.startsAt)) : null;
-  const videoReady = rt.ready.thanksVideo && rt.thanksVideo.src;
-  const showVideo = videoReady || showPending;
-  const showTestimonials = rt.ready.testimonials || showPending;
 
   return (
     <main className="relative z-[2] mx-auto max-w-[1120px] px-5 pb-20 pt-6 lg:px-10">
@@ -109,49 +105,7 @@ export function ThanksContent({ content }: { content: LandingContent }) {
         </div>
       </div>
 
-      {showVideo && (
-        <div className="mx-auto mt-12 max-w-[760px]">
-          <VideoPlayer
-            src={rt.thanksVideo.src || "/video/placeholder.mp4"}
-            poster={rt.thanksVideo.poster || "/img/video-poster.webp"}
-            captions="/video/placeholder-es.vtt"
-            label={thanks.videoLabel}
-            pendingNote={videoReady ? undefined : "vídeo de 60 s"}
-          />
-          {!videoReady && (
-            <p className="mt-3 text-center">
-              <PendingTag>sustituye thanksVideo en src/config/site.ts</PendingTag>
-            </p>
-          )}
-        </div>
-      )}
 
-
-      <section aria-labelledby="preparar" className="mx-auto mt-12 max-w-[760px]">
-        <h2 id="preparar" className="font-display text-2xl font-bold leading-snug sm:text-[1.75rem]">
-          {thanks.prepTitle}
-        </h2>
-        <p className="mt-2 text-fg-muted">{thanks.prepIntro}</p>
-        <ul className="mt-5 grid gap-3 sm:grid-cols-3">
-          {PREP.map((text, i) => (
-            <li key={text} className="card p-5">
-              <span className="text-[13px] font-semibold text-fg-muted">{i + 1}</span>
-              <p className="mt-1.5 text-[16px] leading-snug text-fg">{text}</p>
-            </li>
-          ))}
-        </ul>
-        <p className="mt-5 flex items-start gap-3 text-[15px] text-fg-muted">
-          <BellRinging size={22} className="mt-0.5 shrink-0 text-accent" aria-hidden />
-          Recibirás un recordatorio de la llamada por email.
-        </p>
-      </section>
-
-      {showTestimonials && (
-        <div className="mt-14 grid gap-4 md:grid-cols-2 md:gap-5">
-          <TestimonialCard data={proof.testimonials[1]} index={1} />
-          <TestimonialCard data={proof.testimonials[2]} index={2} />
-        </div>
-      )}
 
       <CalculatorSection />
     </main>

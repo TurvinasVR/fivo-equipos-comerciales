@@ -2,9 +2,7 @@
 
 import { useId, useState } from "react";
 import { Plus } from "@phosphor-icons/react";
-import { showPending } from "@/lib/pending";
 import { rich } from "@/lib/rich";
-import { PendingTag } from "./PendingTag";
 import { BlockCta } from "./landing/BlockCta";
 import { useLanding } from "./landing/LandingContext";
 
@@ -14,11 +12,11 @@ export function Faq() {
   const ITEMS = faq.items;
   const base = useId();
   const [open, setOpen] = useState<number | null>(null);
-  const visible = ITEMS.map((it, i) => ({ it, i })).filter(({ it }) => it.a || showPending);
+  const visible = ITEMS.map((it, i) => ({ it, i })).filter(({ it }) => it.a);
 
   return (
     <section aria-labelledby="faq" className="bg-bg">
-      <div className="mx-auto max-w-[1120px] px-5 section-pad lg:px-10">
+      <div className="mx-auto max-w-[1120px] px-5 pb-5 pt-12 lg:px-10 lg:pb-8 lg:pt-20">
         <div className="max-w-[820px]">
         <h2 id="faq" className="font-display text-3xl font-black tracking-[-0.015em] sm:text-4xl">
           {faq.title}
@@ -43,7 +41,7 @@ export function Faq() {
                     <Plus
                       size={22}
                       aria-hidden
-                      className="shrink-0 text-accent transition-transform duration-300"
+                      className="icon-brand shrink-0 transition-transform duration-300"
                       style={{ transform: isOpen ? "rotate(45deg)" : "none" }}
                     />
                   </button>
@@ -52,11 +50,6 @@ export function Faq() {
                   <div>
                     <div className="space-y-3 pb-6 pr-8 text-fg-muted">
                       {it.a && <p>{rich(it.a)}</p>}
-                      {it.pending && (
-                        <p>
-                          <PendingTag>{it.pending}</PendingTag>
-                        </p>
-                      )}
                     </div>
                   </div>
                 </div>

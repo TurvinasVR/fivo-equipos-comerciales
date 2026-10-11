@@ -9,7 +9,7 @@ export type Lead = Record<string, string>;
 /**
  * Calendario real (Calendly o Cal.com) en un iframe, dentro del mismo bloque.
  * Detecta la reserva con los mensajes postMessage de cada proveedor.
- * Pendiente de verificar con una cuenta real (ver PENDIENTES.md).
+ * Sin verificar aún con una cuenta real de calendario.
  */
 export function ProviderEmbed({ lead, utm, onBooked }: { lead: Lead; utm: Utm; onBooked: (startsAtIso?: string) => void }) {
   const { provider, url } = siteConfig.calendar;

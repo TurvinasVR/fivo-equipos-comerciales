@@ -13,8 +13,6 @@ export type CtaPosition =
   | "barra"
   | "hero"
   | "video_end"
-  | "llamada"
-  | "cierre"
   | "fijo-movil"
   | "gracias"
   | "herramientas"
@@ -22,14 +20,13 @@ export type CtaPosition =
   | "como-funciona"
   | "pregunta"
   | "pregunta-enlace"
-  | "para-quien"
   | "prueba"
   | "faq";
 
 type Props = {
   /** Posición del botón, se envía con cta_click. */
   position: CtaPosition;
-  /** "xl" 56px (primera pantalla y cierre), "lg" y "md" 52px (resto), "sm" barra superior. */
+  /** "xl" 56px (primera pantalla), "lg" y "md" 52px (resto), "sm" barra superior. */
   size?: "xl" | "lg" | "md" | "sm";
   /** Botón secundario (borde line, texto fg). El degradado va solo en el botón principal. */
   secondary?: boolean;
@@ -111,8 +108,8 @@ export function CtaButton({
   }, [heroAnchor]);
 
   const sizeCls = size === "xl" ? "btn-cta--xl" : size === "lg" ? "btn-cta--lg" : size === "sm" ? "btn-cta--sm max-sm:px-4" : "";
-  // El formulario queda por encima de las preguntas frecuentes y del cierre: ahí el botón sube
-  const up = position === "faq" || position === "cierre";
+  // El formulario queda por encima de las preguntas frecuentes y : ahí el botón sube
+  const up = position === "faq";
   const Arrow = up ? ArrowUp : ArrowDown;
 
   return (

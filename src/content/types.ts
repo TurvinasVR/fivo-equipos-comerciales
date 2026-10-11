@@ -6,7 +6,7 @@ export type LandingSlug = "equipos-comerciales";
 export type ScaleFigure = { figure: string; label: string; sr: string };
 
 export type TestimonialData = {
-  /** Contenido real. Mientras sea null, la tarjeta es un hueco con marcador. */
+  /** Foto o logotipo. Sin él, la tarjeta muestra la inicial del nombre. */
   logoOrPhoto: string | null;
   name: string;
   role: string;
@@ -83,8 +83,6 @@ export type FaqItem = {
   q: string;
   /** Respuesta publicable, solo con hechos ya publicados. Vacía = sin respuesta aún. */
   a: string;
-  /** Nota solo para desarrollo: qué falta confirmar. */
-  pending?: string;
 };
 
 export type LandingContent = {
@@ -106,8 +104,6 @@ export type LandingContent = {
     videoLabel: string;
     /** Pantalla final del vídeo: titular y texto del botón de repetir. Sin esto, el vídeo termina sin pantalla final. */
     videoEnd?: { title: string; replay: string };
-    /** Bajo el botón: logotipos de clientes o las cifras de escala en pequeño. */
-    proof: "logos" | "scale";
     trust: string;
   };
 
@@ -143,27 +139,10 @@ export type LandingContent = {
     questions: AskQuestion[];
   };
 
-  who?: {
-    title: string;
-    yes: { label: string; items: string[] };
-    no: { label: string; items: string[] };
-  };
-
   proof: {
     title: string;
     scale: ScaleFigure[];
-    logos: boolean;
     testimonials: TestimonialData[];
-  };
-
-  agenda: {
-    title: string;
-    segments: { range: string; text: string }[];
-    srList: string[];
-    askText: string;
-    fork: [string, string];
-    facts: string[];
-    note: string;
   };
 
   booking: {
@@ -184,14 +163,12 @@ export type LandingContent = {
 
   faq: { title: string; items: FaqItem[] };
 
-  closing: { title: string; disclaimer?: string };
+  footer: { disclaimer?: string };
 
   thanks: {
     title: string;
-    prepTitle: string;
-    prepIntro: string;
-    prep: string[];
-    videoLabel: string;
     ics: { prodid: string };
+    /** Calculadora de ahorro de /gracias. */
+    calculator: { title: string; intro: string; resultTitle: string };
   };
 };

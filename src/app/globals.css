@@ -1,24 +1,5 @@
 @import "tailwindcss";
 
-/* Escala única de espacios: entre secciones (--section-y arriba y abajo de cada una) y entre el contenido de
-   una sección y su bloque de botón (--cta-gap). Móvil y escritorio; sin paddings sueltos en las secciones. */
-:root {
-  --section-y: 3rem;
-  --cta-gap: 2rem;
-}
-@media (min-width: 1024px) {
-  :root {
-    --section-y: 4rem;
-    --cta-gap: 2.5rem;
-  }
-}
-.section-pad {
-  padding-block: var(--section-y);
-}
-.cta-gap {
-  margin-top: var(--cta-gap);
-}
-
 /* Sistema de diseño de Fivo (ver DESIGN.md). Un solo tema: oscuro, bloqueado.
    Todo color sale de aquí. Las escenas WebGL leen los mismos valores de src/lib/scene/tokens.ts. */
 @theme {
@@ -39,7 +20,7 @@
   /* Degradado de marca: solo el botón "Agendar mi llamada" */
   --color-grad-a: #5271ff;
   --color-grad-b: #00c9ff;
-  /* Solo marcadores de desarrollo (PENDIENTE) */
+  /* Aviso "Calendario de ejemplo" */
   --color-warn: #e8a838;
 
   --font-display: var(--font-satoshi), "Arial", sans-serif;
@@ -122,7 +103,7 @@ h3 {
   text-wrap: balance;
 }
 
-/* Botón principal: el único elemento con el degradado de marca. 52px; 56px en la primera pantalla y el cierre.
+/* Botón principal ("Agendar mi llamada" en toda la página): siempre con el degradado de marca. 52px; 44px en la barra superior.
    Texto en bg (#08090B) sobre el degradado: 4,9:1 en el extremo azul y más de 10:1 en el cian. */
 .btn-cta {
   position: relative;
@@ -307,26 +288,6 @@ button:hover > .cta-arrow[data-dir="up"] {
   }
 }
 
-/* Botón principal cedido: con el botón repetido en cada bloque, si dos coinciden en pantalla,
-   el degradado se queda en uno solo y el otro se ve como botón secundario (ver CtaGradientKeeper) */
-.btn-cta[data-demoted]::after {
-  display: none;
-}
-.btn-cta[data-demoted] {
-  transform: none;
-  background: transparent;
-  box-shadow: none;
-  color: var(--color-fg);
-  border: 1px solid var(--color-line);
-  font-weight: 500;
-}
-.btn-cta[data-demoted]:hover {
-  background: var(--color-surface-2);
-  border-color: var(--color-line-strong);
-  filter: none;
-  box-shadow: none;
-}
-
 /* Botón secundario: borde line, texto fg */
 .btn-ghost {
   display: inline-flex;
@@ -451,12 +412,32 @@ select.field {
   border-color: var(--color-line-strong);
 }
 .seg input:checked + span {
-  background: var(--color-accent-soft);
-  border-color: var(--color-accent);
+  border-color: transparent;
+  background:
+    linear-gradient(var(--color-accent-soft), var(--color-accent-soft)) padding-box,
+    linear-gradient(var(--color-surface-2), var(--color-surface-2)) padding-box,
+    var(--brand-135) border-box;
 }
 .seg input:checked + span::before {
-  border-color: var(--color-accent);
-  background: radial-gradient(circle, var(--color-accent) 0 3.5px, transparent 4px);
+  border-color: transparent;
+  background:
+    linear-gradient(var(--color-surface-2), var(--color-surface-2)) padding-box,
+    var(--brand-135) border-box;
+}
+/* Punto del disco elegido: en degradado de marca */
+.seg span {
+  position: relative;
+}
+.seg input:checked + span::after {
+  content: "";
+  position: absolute;
+  left: calc(0.875rem + 5px);
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 9999px;
+  background: var(--brand-135);
 }
 .seg input:focus-visible + span {
   outline: 2px solid var(--color-accent);
@@ -474,20 +455,6 @@ table.sr-only {
 /* Mientras el aviso de cookies está abierto, el botón fijo de móvil se oculta para no solaparse con él */
 html[data-consent-open] .sticky-cta {
   display: none;
-}
-
-/* Marcador solo en desarrollo */
-.pending-tag {
-  display: inline-block;
-  padding: 2px 8px;
-  border: 1px dashed var(--color-warn);
-  border-radius: var(--radius-chip);
-  color: var(--color-warn);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  line-height: 1.5;
-  background: color-mix(in srgb, var(--color-warn) 8%, transparent);
 }
 
 /* Estado: punto de 6px y una palabra, nunca una placa de color */
@@ -577,7 +544,14 @@ html[data-hero3d] .hero-graph-svg {
 .day small { font-size: 12px; line-height: 1.3; }
 .day b { font-family: var(--font-sans); font-weight: 700; font-size: 20px; line-height: 1.2; color: var(--color-fg); }
 .day:hover span { border-color: var(--color-line-strong); }
-.day input:checked + span { background: var(--color-accent-soft); border-color: var(--color-accent); color: var(--color-fg); }
+.day input:checked + span {
+  border-color: transparent;
+  color: var(--color-fg);
+  background:
+    linear-gradient(var(--color-accent-soft), var(--color-accent-soft)) padding-box,
+    linear-gradient(var(--color-surface-2), var(--color-surface-2)) padding-box,
+    var(--brand-135) border-box;
+}
 .day input:focus-visible + span { outline: 2px solid var(--color-accent); outline-offset: 3px; }
 
 .ask-grid { display: grid; grid-template-areas: "graph" "chat" "src"; }
@@ -589,3 +563,44 @@ html[data-hero3d] .hero-graph-svg {
 video::-webkit-media-text-track-container {
   display: none !important;
 }
+
+/* /gracias: el botón del calendario solo existe si hay fecha (la marca el script de ThanksPage antes de pintar) */
+.cal-slot { display: none; }
+html[data-booking] .cal-slot { display: inline-block; }
+
+/* Branding: degradado de marca (brand-start a brand-end) en los elementos destacados: pasos, números, seleccionados,
+   puntos, iconos y barras. El texto de los enlaces se queda en accent: con degradado se lee peor. */
+:root {
+  --brand-90: linear-gradient(90deg, var(--color-grad-a), var(--color-grad-b));
+  --brand-135: linear-gradient(135deg, var(--color-grad-a), var(--color-grad-b));
+  --brand-180: linear-gradient(180deg, var(--color-grad-a), var(--color-grad-b));
+}
+.bg-brand { background-image: var(--brand-135); }
+.bg-brand-x { background-image: var(--brand-90); }
+.bg-brand-y { background-image: var(--brand-180); }
+.status-dot.status-dot--brand { background: var(--brand-135); }
+/* Borde de 1,5px en degradado con el relleno que se indique en --inner (por defecto, bg) */
+.ring-brand {
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(var(--inner, var(--color-bg)), var(--inner, var(--color-bg))) padding-box,
+    var(--brand-135) border-box;
+}
+/* Elegido: borde en degradado y fondo accent-soft */
+.sel-brand {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--color-accent-soft), var(--color-accent-soft)) padding-box,
+    linear-gradient(var(--color-surface), var(--color-surface)) padding-box,
+    var(--brand-135) border-box;
+}
+/* Al pasar el ratón: borde en degradado */
+.hover-ring-brand:hover:not(:disabled) {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--color-surface-2), var(--color-surface-2)) padding-box,
+    var(--brand-135) border-box;
+}
+/* Iconos con el degradado (el <linearGradient id="fivo-grad"> está en el layout). Se activa tras la carga: ver BrandIcons */
+.icon-brand { fill: var(--color-accent); }
+html[data-brand-icons] .icon-brand { fill: url(#fivo-grad); }

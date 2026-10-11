@@ -8,15 +8,14 @@ import { useLanding } from "./LandingContext";
 /**
  * El cierre de un bloque: una frase corta que enlaza lo que se acaba de ver con la llamada y, debajo,
  * el botón "Agendar mi llamada" con su línea de apoyo. Solo existe en las landings que repiten el botón
- * (repeatCta). Sin caja ni franja: se alinea con el contenido del bloque. Lleva el degradado; si dos
- * coinciden en pantalla, el segundo pasa a secundario (CtaGradientKeeper).
+ * (repeatCta). Sin caja ni franja: se alinea con el contenido del bloque. Siempre con el degradado de marca.
  *
  * `visible` permite que aparezca más tarde (p. ej. al pasar a "Con Fivo"). Su sitio queda reservado, así
  * que la aparición no mueve nada.
  */
 export function BlockCta({
   position,
-  className = "cta-gap",
+  className = "mt-10 lg:mt-14",
   visible = true,
 }: {
   position: CtaPosition;
