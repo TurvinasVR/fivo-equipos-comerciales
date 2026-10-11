@@ -10,7 +10,11 @@ export type AnalyticsEvent =
   | "form_start"
   | "form_view"
   | "form_submit"
-  | "call_booked";
+  | "call_booked"
+  | "calculator_start"
+  | "calculator_complete"
+  | "calculator_pdf"
+  | "calculator_report_sent";
 
 type Params = Record<string, string | number | boolean | undefined>;
 

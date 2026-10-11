@@ -9,6 +9,7 @@ import { BOOKING_KEY } from "./booking/BookingBlock";
 import { PendingTag } from "./PendingTag";
 import { VideoPlayer } from "./VideoPlayer";
 import { TestimonialCard } from "./Testimonial";
+import { CalculatorSection } from "./calculator/CalculatorSection";
 
 type Booking = { startsAt: string | null; minutes: number; mock: boolean };
 
@@ -151,6 +152,8 @@ export function ThanksContent({ content }: { content: LandingContent }) {
           <TestimonialCard data={proof.testimonials[2]} index={2} />
         </div>
       )}
+
+      <CalculatorSection />
     </main>
   );
 }
