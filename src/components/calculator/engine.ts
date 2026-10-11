@@ -186,6 +186,11 @@ export function initCalculator(root: HTMLElement, host: CalculatorHost): () => v
   var started = false;
   function markStart(){ if(started) return; started = true; host.track("calculator_start"); }
   // ---- Hoja de Google: el cálculo se guarda cada vez que se llega al resultado, 2 s después de cada cambio y al descargar el PDF ----
+  // Texto del tramo de gasto en consultores elegido, tal como se ve ahora (las 4 opciones se recalculan con los ingresos)
+  function tierText(){
+    var i = root.querySelector('input[name="consultTier"]:checked');
+    return i && i.nextElementSibling ? i.nextElementSibling.textContent.trim() : "";
+  }
   function sheetData(r){
     var sec = state.sector ? $("sec-"+state.sector) : null;
     var sup = [];
@@ -198,6 +203,7 @@ export function initCalculator(root: HTMLElement, host: CalculatorHost): () => v
       comerciales: r.reps, resto_equipo: r.rest, gasto_anual: r.team, ingresos_anuales: r.calls,
       graba_llamadas: state.recCalls ? optText("recCalls", state.recCalls) : "",
       revision_externa: state.hasConsult ? optText("hasConsult", state.hasConsult) : "",
+      gasto_revision_externa: state.hasConsult==="yes" && state.consultTier>=0 ? tierText() : "",
       optimizar_areas: state.optimize ? optText("optimize", state.optimize) : "",
       gasto_apps_mes: r.appsM,
       gasto_grabacion_mes: state.appsUnknown ? "no lo sé" : r.appsRepIn,

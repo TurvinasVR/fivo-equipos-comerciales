@@ -14,6 +14,7 @@ export type CalculoData = {
   ingresos_anuales: number;
   graba_llamadas: string;
   revision_externa: string;
+  gasto_revision_externa: string;
   optimizar_areas: string;
   gasto_apps_mes: number;
   gasto_grabacion_mes: number | string;
@@ -47,6 +48,7 @@ export function sendCalculo(evento: SheetEvento, data: CalculoData): void {
       ingresos_anuales: data.ingresos_anuales,
       graba_llamadas: data.graba_llamadas,
       revision_externa: data.revision_externa,
+      gasto_revision_externa: data.gasto_revision_externa,
       optimizar_areas: data.optimizar_areas,
       gasto_apps_mes: data.gasto_apps_mes,
       gasto_grabacion_mes: data.gasto_grabacion_mes,
