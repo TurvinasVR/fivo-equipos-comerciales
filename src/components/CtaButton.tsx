@@ -55,7 +55,7 @@ export function CtaButton({
 }: Props) {
   const ref = useRef<HTMLAnchorElement>(null);
   // En el HTML va el enlace tal cual; con los utm_ de la URL se completa al cargar
-  const [href, setHref] = useState(() => meetzHref(""));
+  const [href, setHref] = useState(() => meetzHref("", false));
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setHref(meetzHref());
@@ -106,6 +106,8 @@ export function CtaButton({
       className={`${secondary ? `btn-ghost ${size === "sm" ? "max-sm:px-3.5" : ""}` : `btn-cta ${sizeCls}`} ${full ? "w-full" : ""} ${className}`}
       onClick={() => {
         // La página cambia al pulsar: el evento sale por sendBeacon
+        // el enlace con el código real, por si el clic llega antes que el efecto que lo completa
+        if (ref.current) ref.current.href = meetzHref();
         track("cta_click", { position }, { beacon: true });
       }}
     >

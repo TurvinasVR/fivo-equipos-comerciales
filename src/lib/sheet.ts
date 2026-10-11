@@ -1,6 +1,7 @@
 import { siteConfig } from "@/config/site";
 import { currentLanding } from "./analytics";
 import { readReservaId } from "./booking";
+import { visitorCode } from "./visitor";
 
 export type SheetEvento = "resultado" | "cambio" | "pdf";
 /** Lo que aporta la calculadora; el resto de campos los pone `sendCalculo`. */
@@ -20,21 +21,6 @@ export type CalculoData = {
   facturacion: "mensual" | "anual";
 };
 
-const SESSION_KEY = "fivo-sesion";
-
-/** Un id aleatorio por visita (sessionStorage). */
-function sesionId(): string {
-  try {
-    const saved = window.sessionStorage.getItem(SESSION_KEY);
-    if (saved) return saved;
-    const id = (window.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`).replace(/-/g, "");
-    window.sessionStorage.setItem(SESSION_KEY, id);
-    return id;
-  } catch {
-    return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
-  }
-}
-
 /**
  * Envía el cálculo a la hoja de Google (Apps Script). POST "no-cors" con texto plano y cuerpo JSON. Nunca lanza ni
  * espera: si falla, la calculadora y el PDF siguen como si nada.
@@ -44,7 +30,7 @@ export function sendCalculo(evento: SheetEvento, data: CalculoData): void {
     const body = {
       tipo: "calculo",
       reserva_id: readReservaId() ?? "",
-      sesion: sesionId(),
+      sesion: visitorCode(),
       landing: currentLanding(),
       evento,
       email: data.email,

@@ -4,7 +4,7 @@ import { useLayoutEffect, useState } from "react";
 import { CheckCircle } from "@phosphor-icons/react";
 import { siteConfig } from "@/config/site";
 import type { LandingContent } from "@/content/types";
-import { readBooking, readReservaId, type BookingInfo } from "@/lib/booking";
+import { captureMeetzParams, readBooking, readReservaId, type BookingInfo } from "@/lib/booking";
 import { CalendarAdd } from "./CalendarAdd";
 import { TestimonialCard } from "./Testimonial";
 import { CalculatorSection } from "./calculator/CalculatorSection";
@@ -25,6 +25,7 @@ export function ThanksContent({ content }: { content: LandingContent }) {
   // Antes de pintar (también al llegar por navegación interna, donde el script de ThanksPage no corre): fecha de la
   // llamada, de los parámetros de la URL del proveedor de calendario o de la reserva guardada en el navegador
   useLayoutEffect(() => {
+    captureMeetzParams();
     readReservaId();
     const b = readBooking();
     document.documentElement.toggleAttribute("data-booking", Boolean(b));

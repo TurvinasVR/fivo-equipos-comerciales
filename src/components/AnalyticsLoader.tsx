@@ -4,6 +4,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { siteConfig } from "@/config/site";
 import { readConsent, subscribeConsent } from "@/lib/consent";
 import { flushQueue, revokeConsent } from "@/lib/analytics";
+import { visitorCode } from "@/lib/visitor";
 
 type FbqStub = ((...args: unknown[]) => void) & {
   callMethod?: (...args: unknown[]) => void;
@@ -27,6 +28,11 @@ function loadScript(src: string) {
 /** Carga GA4 y Meta Pixel solo después de aceptar cookies (RGPD). */
 export function AnalyticsLoader() {
   const consent = useConsent();
+
+  // Código de visitante: se crea al entrar en cualquier página (une el cálculo con la reserva de meetz)
+  useEffect(() => {
+    visitorCode();
+  }, []);
 
   useEffect(() => {
     if (consent === "denied") {

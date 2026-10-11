@@ -221,7 +221,7 @@ export default function AskDemo() {
   const [rootRef, inView] = useInView<HTMLDivElement>({ threshold: 0.35 });
   const [sel, setSel] = useState(0);
   // Enlace del texto bajo la respuesta: meetz, con los utm_ de la URL si los trae
-  const [href, setHref] = useState(() => meetzHref(""));
+  const [href, setHref] = useState(() => meetzHref("", false));
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setHref(meetzHref());
@@ -386,7 +386,10 @@ export default function AskDemo() {
                   data-cta="pregunta-enlace"
                   tabIndex={phase === "done" ? 0 : -1}
                   inert={phase !== "done" || undefined}
-                  onClick={() => track("cta_click", { position: "pregunta-enlace" }, { beacon: true })}
+                  onClick={(e) => {
+                    e.currentTarget.href = meetzHref();
+                    track("cta_click", { position: "pregunta-enlace" }, { beacon: true });
+                  }}
                   className="group inline-flex min-h-[44px] items-center gap-2 text-[15px] font-semibold text-accent underline-offset-4 hover:underline"
                   style={{ opacity: phase === "done" ? 1 : 0, transform: phase === "done" ? "none" : "translateY(6px)", transition: "opacity 400ms 500ms, transform 400ms 500ms" }}
                 >

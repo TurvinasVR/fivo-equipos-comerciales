@@ -12,9 +12,8 @@ export type BookingInfo = {
   meetingUrl?: string;
 };
 
-// Parámetros con los que Calendly (event_start_time) y Cal.com (startTime) redirigen al terminar la reserva.
-// Todavía no están conectados: la lectura está preparada para cuando lo estén. La duración es siempre la de la landing (30 minutos).
-const START_PARAMS = ["event_start_time", "startTime", "start_time"];
+// Parámetros con los que el proveedor de reservas (meetz, Calendly, Cal.com) redirige al terminar la reserva. La duración es siempre la de la landing (30 minutos).
+const START_PARAMS = ["event_start_time", "startTime", "start_time", "start"];
 const MEETING_PARAMS = ["meeting_url", "meetingUrl", "videoCallUrl", "video_call_url", "join_url", "hangoutLink", "location"];
 
 function validDate(v: string | null | undefined): Date | null {
@@ -38,7 +37,7 @@ function httpUrl(v: string | null | undefined): string | undefined {
  * calendario, y si no, la reserva guardada en el navegador. Sin ninguna, null.
  */
 export function readBooking(): BookingInfo | null {
-  const q = new URLSearchParams(window.location.search);
+  const q = meetzParams();
   const first = (keys: string[]) => keys.map((k) => q.get(k)).find((v) => v) ?? null;
 
   const fromUrl = validDate(first(START_PARAMS));
@@ -65,16 +64,50 @@ export function readBooking(): BookingInfo | null {
  */
 export const BOOKING_SNIFF = `try{var q=new URLSearchParams(location.search),k=${JSON.stringify(START_PARAMS)},ok=false;for(var i=0;i<k.length;i++){var v=q.get(k[i]);if(v&&!isNaN(Date.parse(v)))ok=true}if(!ok){var r=sessionStorage.getItem(${JSON.stringify(BOOKING_KEY)});if(r){var b=JSON.parse(r);if(b&&b.startsAt&&!isNaN(Date.parse(b.startsAt)))ok=true}}if(ok)document.documentElement.setAttribute("data-booking","1")}catch(e){}`;
 
-/** Clave de sessionStorage con el id de la reserva de meetz (?r= en la URL de /gracias). */
+/** Clave de sessionStorage con el id de la reserva de meetz. */
 const RESERVA_KEY = "fivo-reserva";
+/** Clave de sessionStorage con todos los parámetros que trajo la URL de /gracias (lo que manda meetz al redirigir). */
+const PARAMS_KEY = "fivo-meetz-params";
+/** Nombres con los que puede llegar el id de la reserva. */
+const RESERVA_PARAMS = ["r", "booking_id", "bookingId", "id"];
 
-/** El id de la reserva: el ?r= de la URL (se guarda mientras dure la visita) o, si no viene, el guardado. */
+/** Los parámetros de la URL; si la URL no trae ninguno, los guardados al llegar (se pierden al navegar dentro de la web). */
+function meetzParams(): URLSearchParams {
+  const q = new URLSearchParams(window.location.search);
+  if ([...q.keys()].length) return q;
+  try {
+    const saved = JSON.parse(window.sessionStorage.getItem(PARAMS_KEY) ?? "{}") as Record<string, string>;
+    return new URLSearchParams(saved);
+  } catch {
+    return q;
+  }
+}
+
+/** Guarda en la sesión todos los parámetros de la URL y los muestra en la consola (para saber qué manda meetz). */
+export function captureMeetzParams(): void {
+  try {
+    const q = new URLSearchParams(window.location.search);
+    if (![...q.keys()].length) return;
+    const all: Record<string, string> = {};
+    q.forEach((v, k) => {
+      all[k] = v.slice(0, 300);
+    });
+    window.sessionStorage.setItem(PARAMS_KEY, JSON.stringify(all));
+    console.info("Parámetros de meetz:", all);
+  } catch {
+    /* sin sessionStorage: no pasa nada */
+  }
+}
+
+/** El id de la reserva (r, booking_id, bookingId o id), guardado mientras dure la visita. */
 export function readReservaId(): string | null {
   try {
-    const r = new URLSearchParams(window.location.search).get("r")?.trim().slice(0, 100);
-    if (r) {
-      window.sessionStorage.setItem(RESERVA_KEY, r);
-      return r;
+    const q = meetzParams();
+    const found = RESERVA_PARAMS.map((k) => q.get(k)?.trim()).find(Boolean);
+    if (found) {
+      const id = found.slice(0, 100);
+      window.sessionStorage.setItem(RESERVA_KEY, id);
+      return id;
     }
     return window.sessionStorage.getItem(RESERVA_KEY);
   } catch {
