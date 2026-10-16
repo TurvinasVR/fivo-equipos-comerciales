@@ -84,7 +84,7 @@ export function ToolsScene() {
 
   return (
     <section aria-labelledby="herramientas" className="relative border-y border-line">
-      <div className="mx-auto max-w-[1120px] px-5 pb-6 pt-14 text-center lg:px-10 lg:pt-16">
+      <div className="mx-auto max-w-[1120px] px-5 pb-6 pt-12 text-center lg:px-10 lg:pt-20">
         <h2 id="herramientas" className="font-display text-2xl font-black sm:text-3xl">
           {tools.title}
         </h2>
