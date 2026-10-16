@@ -102,30 +102,3 @@ export function toolsFor(ids: readonly ToolId[]): ToolNode[] {
 }
 
 export const TOOLS: ToolNode[] = toolsFor(TOOL_IDS_DEFAULT);
-
-/**
- * Reparto en anillo por longitud de arco (para el contenedor estrecho del móvil):
- * los nodos quedan a la misma distancia entre sí, sin amontonarse arriba o abajo.
- */
-export function compactRing(count: number, rxPx = 126, ryPx = 179, startDeg = 90) {
-  const N = 720;
-  const pts: { a: number; s: number }[] = [];
-  let s = 0;
-  let prev = { x: Math.cos(0) * rxPx, y: 0 };
-  for (let i = 0; i <= N; i++) {
-    const a = (i / N) * Math.PI * 2;
-    const p = { x: Math.cos(a) * rxPx, y: Math.sin(a) * ryPx };
-    if (i > 0) s += Math.hypot(p.x - prev.x, p.y - prev.y);
-    pts.push({ a, s });
-    prev = p;
-  }
-  const total = s;
-  const start = (startDeg * Math.PI) / 180;
-  // longitud de arco hasta el ángulo de inicio
-  const s0 = pts.reduce((best, p) => (Math.abs(p.a - start) < Math.abs(best.a - start) ? p : best)).s;
-  return Array.from({ length: count }, (_, k) => {
-    const target = (s0 + (k / count) * total) % total;
-    const hit = pts.find((p) => p.s >= target) ?? pts[0];
-    return { u: Math.cos(hit.a), v: Math.sin(hit.a) };
-  });
-}

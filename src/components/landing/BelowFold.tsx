@@ -5,7 +5,6 @@ import { Faq } from "../Faq";
 import { Footer } from "../Footer";
 import { StickyCta } from "../StickyCta";
 import { HowItWorks } from "../HowItWorks";
-import { ToolsScene } from "../scene/ToolsScene";
 import { ProblemSection } from "../sections/ProblemSection";
 import { AskSection } from "../sections/AskSection";
 import Reviews from "../reviews/Reviews";
@@ -22,7 +21,6 @@ export default function BelowFold() {
           <Reviews headingLevel={2} className="" />
         </div>
         <HowItWorks />
-        <ToolsScene />
         <ProblemSection />
         <AskSection />
         <Proof />

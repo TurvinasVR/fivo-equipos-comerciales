@@ -239,36 +239,6 @@ button:hover > .cta-arrow[data-dir="up"] {
   color: var(--color-fg-muted);
 }
 
-/* Escena de herramientas: dos disposiciones (ancha y compacta) elegidas por CSS, para que el HTML del servidor
-   ya traiga cada logotipo en su sitio y no haya salto al cargar el JavaScript. Compacta = menos de 680px. */
-.tool-chip {
-  left: var(--lf);
-  top: var(--tf);
-}
-.tool-ring {
-  width: var(--w);
-  height: var(--h);
-}
-.tool-lines--compact {
-  display: none;
-}
-@media (max-width: 679px) {
-  .tool-chip {
-    left: var(--lc);
-    top: var(--tc);
-  }
-  .tool-ring {
-    width: var(--wc);
-    height: var(--hc);
-  }
-  .tool-lines--full {
-    display: none;
-  }
-  .tool-lines--compact {
-    display: block;
-  }
-}
-
 /* Barra superior fija: sin fondo en lo alto; al hacer scroll, bg al 85 % con desenfoque y borde inferior de 1px.
    Sin soporte de backdrop-filter, bg sólido. */
 .topbar {

@@ -17,7 +17,6 @@ export const equiposComerciales: LandingContent = {
   thanksPath: "/gracias",
   repeatCta: true,
   ctaLines: {
-    herramientas: "¿Ya trabajáis con estas herramientas? Te enseñamos cómo quedaría conectado lo vuestro.",
     problema: "Así se ve con Fivo. En la llamada lo vemos con las llamadas de tu equipo.",
     "como-funciona": "Te lo enseñamos con un caso como el tuyo en **30 minutos**.",
     pregunta: "¿Qué le preguntarías tú a las llamadas de tu equipo? Tráelo a la llamada y lo vemos.",
@@ -35,11 +34,9 @@ export const equiposComerciales: LandingContent = {
     trust: "Cumple RGPD y SOC 2. Datos alojados en la UE. Tú decides quién ve cada llamada.",
   },
 
+  /** Herramientas del grafo de "Cómo funciona". */
   tools: {
     ids: ["hubspot", "claude", "zoom", "meet", "teams", "slack", "notion", "drive", "chatgpt"],
-    title: "Se conecta a lo que ya usas, y a tu IA",
-    intro: "Conecta el grafo a Claude o ChatGPT y tu IA conocerá a tu equipo sin que se lo expliques.",
-    srList: "Zoom, Google Meet, Microsoft Teams, HubSpot, Slack, Notion, Google Drive, y Claude y ChatGPT vía MCP.",
   },
 
   problem: {
