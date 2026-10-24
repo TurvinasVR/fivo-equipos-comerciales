@@ -20,7 +20,7 @@ export function Hero({ content }: { content: LandingContent }) {
 
         <h1
           id="titular"
-          className="mt-3 max-w-[1040px] font-display text-[clamp(1.5rem,1.1rem+2vw,2.75rem)] font-black leading-[1.1] tracking-[-0.015em] sm:mt-4"
+          className="mt-3 max-w-[1040px] text-balance font-display text-[clamp(1.5rem,1.1rem+2vw,2.75rem)] font-black leading-[1.1] tracking-[-0.015em] sm:mt-4"
         >
           {/* Un solo h1: en móvil el titular corto y desde tableta el completo (el que no toca va con display:none) */}
           {hero.titleMobile ? (
@@ -33,7 +33,7 @@ export function Hero({ content }: { content: LandingContent }) {
           )}
         </h1>
 
-        <p className="mt-3 max-w-[760px] text-[15px] leading-[1.5] text-fg-muted sm:text-base">
+        <p className="mt-3 max-w-[760px] text-pretty text-[15px] leading-[1.5] text-fg-muted sm:text-base">
           {hero.subtitleMobile ? (
             <>
               <span className="md:hidden">{hero.subtitleMobile}</span>

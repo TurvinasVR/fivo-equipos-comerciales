@@ -26,11 +26,8 @@ export const equiposComerciales: LandingContent = {
 
   hero: {
     label: "Para equipos comerciales de **3 o más** closers",
-    title: "Descubre por qué tu mejor closer cierra el doble que el resto, y enséñaselo a los demás",
-    subtitle:
-      "Fivo une las llamadas de tu equipo, tu CRM y tu correo en un grafo de contexto, y te dice qué hace distinto el que cierra. Sin escuchar ni una grabación.",
-    titleMobile: "Descubre qué hace distinto tu mejor closer",
-    subtitleMobile: "Fivo te dice qué hace distinto el que cierra. Sin escuchar ni una grabación.",
+    title: "Haz que todo tu equipo venda como tu mejor closer.",
+    subtitle: "Fivo analiza las llamadas de tu equipo y te dice qué hace el que cierra para que el resto lo repita.",
     videoLabel: "Vídeo de Fivo para equipos comerciales",
     videoEnd: { title: "¿Lo vemos con tu equipo?", replay: "Volver a ver" },
     trust: "Cumple RGPD y SOC 2. Datos alojados en la UE. Tú decides quién ve cada llamada.",

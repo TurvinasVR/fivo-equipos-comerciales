@@ -6,7 +6,7 @@ const META: Record<LandingSlug, { title: string; description: string; image: str
   "equipos-comerciales": {
     title: "Fivo para equipos comerciales: descubre qué hace distinto al que cierra",
     description:
-      "Fivo une las llamadas de tu equipo, tu CRM y tu correo en un grafo de contexto, y te dice qué hace distinto el que cierra. Agenda una llamada de 30 minutos.",
+      "Fivo analiza las llamadas de tu equipo y te dice qué hace el que cierra para que el resto lo repita. Agenda una llamada de 30 minutos.",
     image: "/og.png",
     alt: "Fivo para equipos comerciales",
   },
