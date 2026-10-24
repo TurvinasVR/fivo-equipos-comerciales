@@ -88,3 +88,57 @@ export function useEarly<T extends Element>(): [RefObject<T | null>, boolean] {
   }, []);
   return [ref, early];
 }
+
+/** Verdadero mientras se cumple la media query (en servidor, falso). */
+export function useMedia(query: string) {
+  return useSyncExternalStore(
+    (cb) => {
+      const m = window.matchMedia(query);
+      m.addEventListener("change", cb);
+      return () => m.removeEventListener("change", cb);
+    },
+    () => window.matchMedia(query).matches,
+    () => false,
+  );
+}
+
+/** Móvil: por debajo de md (768 px), el mismo corte que el botón fijo. */
+export const PHONE_QUERY = "(max-width: 767.98px)";
+
+/**
+ * Avance de 0 a 1 ligado al scroll, sin temporizadores: 0 cuando el borde superior del elemento entra por
+ * `start` (fracción de la pantalla desde arriba) y 1 cuando ha subido `span` pantallas más. Se recalcula en el
+ * fotograma siguiente a cada scroll o cambio de tamaño. `enabled` en falso lo deja quieto en 1 (estado final).
+ */
+export function useScrollProgress<T extends Element>(enabled: boolean, start = 0.9, span = 0.75): [RefObject<T | null>, number] {
+  const ref = useRef<T>(null);
+  const [p, setP] = useState(1);
+  useEffect(() => {
+    if (!enabled) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setP(1);
+      return;
+    }
+    let raf = 0;
+    const run = () => {
+      raf = 0;
+      const el = ref.current;
+      if (!el) return;
+      const vh = window.innerHeight;
+      const v = Math.min(1, Math.max(0, (vh * start - el.getBoundingClientRect().top) / (vh * span)));
+      setP(Math.round(v * 400) / 400);
+    };
+    const schedule = () => {
+      if (!raf) raf = requestAnimationFrame(run);
+    };
+    run();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
+  }, [enabled, start, span]);
+  return [ref, p];
+}

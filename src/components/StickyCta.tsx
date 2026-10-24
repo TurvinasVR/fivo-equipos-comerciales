@@ -1,41 +1,47 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { shown, watchCtas } from "@/lib/ctaFlow";
+import { useEffect, useRef, useState } from "react";
 import { CtaButton } from "./CtaButton";
 import { CtaHint } from "./CtaBlock";
 
 /**
- * Botón fijo inferior solo en móvil. Se oculta mientras el botón del hero
- * está a la vista (o el botón de un bloque), y mientras hay aviso de cookies.
+ * Botón fijo inferior solo en móvil. Aparece en cuanto el vídeo del hero queda atrás (por encima de la pantalla) y
+ * ya no se va hasta el final de la página; solo se esconde si se vuelve arriba, al vídeo, o mientras hay aviso de
+ * cookies (globals.css). Publica su alto en --sticky-cta-h para que el body reserve ese hueco abajo y nunca tape
+ * contenido (también el pie y las preguntas frecuentes); el alto incluye el área segura del iPhone.
  */
-export function StickyCta({ hideNearBlockCtas = false }: { hideNearBlockCtas?: boolean }) {
-  const [heroVisible, setHeroVisible] = useState(true);
-  const [blockVisible, setBlockVisible] = useState(false);
+export function StickyCta() {
+  const [hidden, setHidden] = useState(true);
+  const bar = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const hero = document.querySelector("[data-hero-cta]");
-    const observers: IntersectionObserver[] = [];
-    if (hero) {
-      const o = new IntersectionObserver(([e]) => setHeroVisible(e.isIntersecting), { threshold: 0 });
-      o.observe(hero);
-      observers.push(o);
+    const video = document.querySelector("[data-video-shell]");
+    if (!video) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setHidden(false);
+      return;
     }
-    // Landings con el botón repetido al final de cada bloque: el fijo se aparta para no duplicar el degradado
-    // (los botones de los bloques diferidos se montan más tarde, por eso se vigila el scroll)
-    const stop = hideNearBlockCtas
-      ? watchCtas(() => setBlockVisible([...document.querySelectorAll("[data-block-cta]")].some((el) => shown(el))))
-      : undefined;
-    return () => {
-      observers.forEach((o) => o.disconnect());
-      stop?.();
-    };
-  }, [hideNearBlockCtas]);
+    // Oculto mientras el vídeo se ve o está por debajo; visible cuando ya se ha pasado
+    const o = new IntersectionObserver(([e]) => setHidden(e.isIntersecting || e.boundingClientRect.top > 0), { threshold: 0 });
+    o.observe(video);
+    return () => o.disconnect();
+  }, []);
 
-  const hidden = heroVisible || blockVisible;
+  useEffect(() => {
+    const el = bar.current;
+    if (!el) return;
+    const root = document.documentElement;
+    const ro = new ResizeObserver(() => root.style.setProperty("--sticky-cta-h", `${el.offsetHeight}px`));
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      root.style.removeProperty("--sticky-cta-h");
+    };
+  }, []);
 
   return (
     <div
+      ref={bar}
       className="sticky-cta fixed inset-x-0 bottom-0 z-50 border-t border-line bg-bg/95 px-4 pt-2.5 backdrop-blur-sm transition-transform duration-300 md:hidden"
       style={{
         paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))",

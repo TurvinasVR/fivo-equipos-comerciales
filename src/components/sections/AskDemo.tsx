@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, CaretDown, ChatCircleText, MagnifyingGlass } from "@phosphor-icons/react";
 import type { AskAnswer, AskQuestion } from "@/content/types";
-import { typeInto, useInView, useReducedMotion } from "@/lib/hooks";
+import { PHONE_QUERY, typeInto, useInView, useMedia, useReducedMotion, useScrollProgress } from "@/lib/hooks";
 import { useLanding } from "../landing/LandingContext";
 import { meetzHref } from "@/lib/meetz";
 import { track } from "@/lib/analytics";
@@ -37,6 +37,21 @@ const NODES = [
 const HUB = { x: 150, y: 148 };
 
 type Phase = "idle" | "typing" | "searching" | "answering" | "done";
+
+const seg = (p: number, a: number, b: number) => Math.min(1, Math.max(0, (p - a) / (b - a)));
+
+/**
+ * Móvil: el estado de la demo sale directamente del avance del scroll (0 a 1), sin temporizadores. Desde que la
+ * ventana entra en pantalla ya se está escribiendo la pregunta; después, la búsqueda, la respuesta parte a parte y,
+ * al final, las fuentes.
+ */
+function scrollState(p: number, q: Q) {
+  const total = partsOf(q.answer);
+  const typed = Math.round(q.q.length * Math.max(0.1, seg(p, 0, 0.26)));
+  const phase: Phase = p < 0.26 ? "typing" : p < 0.36 ? "searching" : p < 0.86 ? "answering" : "done";
+  const parts = phase === "done" ? total : phase === "answering" ? Math.min(total, 1 + Math.floor(seg(p, 0.36, 0.82) * total)) : 0;
+  return { phase, parts, text: q.q.slice(0, typed) + (typed < q.q.length ? "|" : ""), open: phase === "done" };
+}
 
 /* ------------------------------------------------------------------ grafo */
 
@@ -218,7 +233,11 @@ export default function AskDemo() {
   const { ask } = useLanding();
   const QUESTIONS = ask.questions;
   const reduced = useReducedMotion();
+  const phone = useMedia(PHONE_QUERY);
+  // En móvil (y con movimiento) la animación va ligada al scroll; con movimiento reducido se queda en el estado final
+  const scrollMode = phone && !reduced;
   const [rootRef, inView] = useInView<HTMLDivElement>({ threshold: 0.35 });
+  const [chatRef, prog] = useScrollProgress<HTMLDivElement>(scrollMode, 0.95, 1.1);
   const [sel, setSel] = useState(0);
   // Enlace del texto bajo la respuesta: meetz, con los utm_ de la URL si los trae
   const [href, setHref] = useState(() => meetzHref("", false));
@@ -230,9 +249,9 @@ export default function AskDemo() {
   // Estado inicial estático ya pintado (el que ve el HTML del servidor): primera pregunta con su respuesta completa.
   // `armed` indica que la animación está activa: se arma al cargar el JavaScript si la demo aún no se ve, y al elegir pregunta.
   const [armed, setArmed] = useState(false);
-  const [phase, setPhase] = useState<Phase>("done");
-  const [parts, setParts] = useState(() => partsOf(ask.questions[0].answer));
-  const [open, setOpen] = useState<boolean[]>([true, true, true]);
+  const [phaseT, setPhase] = useState<Phase>("done");
+  const [partsT, setParts] = useState(() => partsOf(ask.questions[0].answer));
+  const [openT, setOpen] = useState<boolean[]>([true, true, true]);
   // Plegado a mano por quien lo pide: solo entonces cambia la altura. La animación nunca pliega ni despliega (sin saltos de diseño).
   const [folded, setFolded] = useState<boolean[]>([false, false, false]);
   const [hover, setHover] = useState<number | null>(null);
@@ -246,6 +265,8 @@ export default function AskDemo() {
     const r = el.getBoundingClientRect();
     if (r.bottom > 0 && r.top < window.innerHeight) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Móvil: no hay animación con tiempos (ver scrollState)
+    if (window.matchMedia(PHONE_QUERY).matches) return;
     setArmed(true);
     setPhase("idle");
     setParts(0);
@@ -257,7 +278,7 @@ export default function AskDemo() {
   }, [inView, armed]);
 
   useEffect(() => {
-    if (!started) return;
+    if (!started || scrollMode) return;
     const q = QUESTIONS[sel];
     const total = partsOf(q.answer);
     setOpen([false, false, false]);
@@ -295,9 +316,13 @@ export default function AskDemo() {
       cancelType();
       timers.forEach(window.clearTimeout);
     };
-  }, [sel, started, reduced, runId, QUESTIONS]);
+  }, [sel, started, reduced, runId, QUESTIONS, scrollMode]);
 
   const q = QUESTIONS[sel];
+  const ss = scrollMode ? scrollState(prog, q) : null;
+  const phase = ss ? ss.phase : phaseT;
+  const parts = ss ? ss.parts : partsT;
+  const open = ss ? [ss.open, ss.open, ss.open] : openT;
   const pick = (i: number) => {
     if (i === sel) setRunId((n) => n + 1);
     setSel(i);
@@ -335,7 +360,7 @@ export default function AskDemo() {
       </div>
 
       {/* Ventana de chat + grafo */}
-      <div className="card overflow-hidden">
+      <div ref={chatRef} className="card overflow-hidden">
         <div className="flex items-center justify-between border-b border-line px-4 py-3 text-[13px] text-fg-muted sm:px-5">
           <span className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -360,7 +385,7 @@ export default function AskDemo() {
             <p className="sr-only">{phase === "done" ? q.sr : "Escribiendo la respuesta de ejemplo."}</p>
             <div aria-hidden>
               <div className="ml-auto min-h-[62px] max-w-[94%] rounded-[12px] bg-accent-soft text-fg px-4 py-2.5 text-[14px] font-medium leading-snug" style={{ opacity: phase === "idle" ? 0.4 : 1 }}>
-                <span ref={qRef}>{phase === "idle" ? ask.placeholder : reduced || !armed ? q.q : ""}</span>
+                {ss ? <span>{ss.text}</span> : <span ref={qRef}>{phase === "idle" ? ask.placeholder : reduced || !armed ? q.q : ""}</span>}
               </div>
 
               <div className="mt-3 flex h-6 items-center gap-2 pl-1 text-[13px] text-accent" style={{ opacity: searching ? 1 : 0, transition: "opacity 250ms" }}>

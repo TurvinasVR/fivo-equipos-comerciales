@@ -282,7 +282,7 @@ export default function ProblemScene({ onCon }: { onCon?: () => void }) {
     return (
       <div>
         <Pains pains={problem.pains} active={-1} reduced pick={() => {}} />
-        <div className="mt-8 grid gap-4 md:grid-cols-2">
+        <div className="mt-8 grid gap-4 max-md:hidden md:grid-cols-2">
           <div>
             <p className="mb-1 text-center text-sm font-semibold text-fg-muted">Cómo lo haces hoy</p>
             <Field problem={problem} mode="hoy" active={-1} instant label="Nodos sueltos y apagados, sin conexiones." />
@@ -317,7 +317,8 @@ export default function ProblemScene({ onCon }: { onCon?: () => void }) {
         <div className="lg:col-span-5">
           <Pains pains={problem.pains} active={active} reduced={false} pick={pick} />
         </div>
-        <div className="lg:col-span-7">
+        {/* El diagrama de los nodos solo desde tableta: en móvil quedan los dolores y, debajo, la comparación */}
+        <div className="max-md:hidden lg:col-span-7">
           <Field problem={problem} mode={mode} active={active} label={mode === "con" ? "Los mismos nodos unidos en el grafo y encendidos." : "Nodos de llamadas, CRM, mensajes y documentos, sueltos y sin conexión entre ellos."} />
         </div>
       </div>

@@ -5,11 +5,12 @@ import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import { STATIC_T } from "@/lib/scene/how/model";
 import type { HowState } from "@/lib/scene/how/model";
 import { clamp01 } from "@/lib/scene/motion";
-import { useEarly } from "@/lib/hooks";
+import { PHONE_QUERY, useEarly } from "@/lib/hooks";
 import { useScene } from "@/lib/scene/store";
 import { useLanding } from "./landing/LandingContext";
 import { BlockCta } from "./landing/BlockCta";
 import { HowPoster } from "./scene/how/HowPoster";
+import { HowPhoneCard } from "./scene/how/HowPhoneCard";
 
 const HowStage = dynamic(() => import("./scene/how/HowStage"), { ssr: false });
 
@@ -52,6 +53,8 @@ export function HowItWorks() {
   const STEPS = how.steps;
   const { plan, canvas } = useScene();
   const wide = useMedia("(min-width: 1024px)");
+  // Móvil: los pasos 2 y 3 son solo su tarjeta (HowPhoneCard), sin el grafo, que ya sale en el paso 1
+  const phone = useMedia(PHONE_QUERY);
   const staticMode = plan === "static";
   const sticky = wide && !staticMode;
   const use3d = plan === "3d" && canvas && sticky;
@@ -197,9 +200,14 @@ export function HowItWorks() {
                 <div className="flex gap-4 md:col-span-4">
                   <StepHead n={k + 1} title={s.title} desc={s.desc} />
                 </div>
-                <div className="relative aspect-[7/10] w-full md:col-span-8 md:aspect-[4/3]">
+                {k > 0 && (
+                  <div className="md:hidden">
+                    <HowPhoneCard k={k as 1 | 2} scene={how.scene} />
+                  </div>
+                )}
+                <div className={`relative aspect-[7/10] w-full md:col-span-8 md:aspect-[4/3] ${k > 0 ? "max-md:hidden" : ""}`}>
                   {stage(`step${k}`, k as 0 | 1 | 2, true)}
-                  {early && !sticky && (
+                  {early && !sticky && !(phone && k > 0) && (
                     <div className="absolute inset-0" style={{ opacity: ready[`step${k}`] ? 1 : 0 }}>
                       <HowStage
                         toolIds={tools.ids}

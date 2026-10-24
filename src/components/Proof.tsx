@@ -17,7 +17,8 @@ export function Proof() {
   const showTestimonials = siteConfig.landings[slug].ready.testimonials && proof.testimonials.length > 0;
   const [main, ...rest] = proof.testimonials;
   return (
-    <section aria-labelledby="prueba">
+    // En móvil no se muestra: la página va directa de la demo a las preguntas
+    <section aria-labelledby="prueba" className="max-md:hidden">
       <div className="mx-auto max-w-[1120px] px-5 pb-5 pt-12 lg:px-10 lg:pb-8 lg:pt-20">
         <h2 id="prueba" className="font-display text-3xl font-black tracking-[-0.015em] sm:text-4xl">
           {proof.title}

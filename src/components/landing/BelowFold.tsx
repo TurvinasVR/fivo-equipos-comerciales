@@ -29,7 +29,7 @@ export default function BelowFold() {
       <div className="relative z-[2]">
         <Footer content={content} />
       </div>
-      <StickyCta hideNearBlockCtas={content.repeatCta} />
+      <StickyCta />
     </>
   );
 }

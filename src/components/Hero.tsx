@@ -40,7 +40,8 @@ export function Hero({ content }: { content: LandingContent }) {
           <CtaBlock position="hero" size="lg" align="center" heroAnchor />
         </div>
 
-        <p className="mt-3 max-w-[640px] text-[13px] leading-[1.5] text-fg-muted lg:mt-3">{hero.trust}</p>
+        {/* Línea de confianza: solo desde tableta (en móvil la primera pantalla termina en el botón) */}
+        <p className="mt-3 max-w-[640px] text-[13px] leading-[1.5] text-fg-muted max-md:hidden lg:mt-3">{hero.trust}</p>
       </div>
     </section>
   );
