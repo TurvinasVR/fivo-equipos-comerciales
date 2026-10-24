@@ -9,6 +9,14 @@ import { track, trackOnce } from "@/lib/analytics";
 import { CtaButton } from "./CtaButton";
 import { CtaHint } from "./CtaBlock";
 
+/**
+ * El VSL empieza en el segundo 1 (el póster es ese mismo fotograma, así que el paso del póster al vídeo no se nota).
+ * Se pide con un fragmento de medio (#t=1, lo entienden Safari, Chrome y Firefox) y, por si acaso, se fija currentTime
+ * al cargar los metadatos, antes de que empiece. Los archivos de vídeo no cambian.
+ */
+const START = 1;
+const withStart = (url: string) => `${url}#t=${START}`;
+
 /** Pantallas que reciben la versión ligera del vídeo: móviles en vertical y en horizontal. */
 const MOBILE_VIDEO_MEDIA = "(max-width: 767px), (max-height: 500px)";
 
@@ -92,7 +100,7 @@ export function VideoPlayer({
     const v = ref.current;
     if (!v) return;
     if (!armed) {
-      v.src = pickSrc();
+      v.src = withStart(pickSrc());
       setArmed();
     }
     if (v.paused) void v.play();
@@ -119,7 +127,7 @@ export function VideoPlayer({
     const v = ref.current;
     if (!v) return;
     setEnded(false);
-    v.currentTime = 0;
+    v.currentTime = START;
     void v.play();
   };
 
@@ -134,7 +142,7 @@ export function VideoPlayer({
       <video
         ref={ref}
         className="absolute inset-0 h-full w-full object-cover"
-        src={armedSrc ?? undefined}
+        src={armedSrc ? withStart(armedSrc) : undefined}
         preload="metadata"
         playsInline
         aria-label={label}
@@ -154,6 +162,10 @@ export function VideoPlayer({
           }
         }}
         onTimeUpdate={onTimeUpdate}
+        onLoadedMetadata={() => {
+          const v = ref.current;
+          if (v && !started && v.currentTime < START) v.currentTime = START;
+        }}
       />
 
       {/* Póster como imagen normal: es el elemento más grande de la primera pantalla y así se pide y se pinta con prioridad */}
@@ -174,7 +186,8 @@ export function VideoPlayer({
       <button
         type="button"
         onClick={togglePlay}
-        tabIndex={-1}
+        // Antes de empezar es el único botón (el pequeño aún no está), así que se alcanza también con el teclado
+        tabIndex={started ? -1 : 0}
         inert={ended || undefined}
         className="absolute inset-0 z-10 flex cursor-pointer items-center justify-center bg-transparent"
         aria-label={playing ? "Pausar el vídeo" : "Reproducir el vídeo"}
@@ -186,17 +199,19 @@ export function VideoPlayer({
         )}
       </button>
 
-      {/* Control: reproducir y pausar */}
-      <div inert={ended || undefined} className="absolute right-2 top-2 z-20 flex items-center gap-0.5 rounded-full bg-glass p-0.5 backdrop-blur-sm sm:right-3 sm:top-3">
-        <button
-          type="button"
-          onClick={togglePlay}
-          className="flex h-11 w-11 items-center justify-center rounded-full text-fg hover:bg-fg/15"
-          aria-label={playing ? "Pausar" : "Reproducir"}
-        >
-          {playing ? <Pause size={20} weight="fill" aria-hidden /> : <Play size={20} weight="fill" aria-hidden />}
-        </button>
-      </div>
+      {/* Control: reproducir y pausar. Solo cuando el vídeo ya ha empezado: antes, el único botón es el grande del centro */}
+      {started && (
+        <div inert={ended || undefined} className="absolute right-2 top-2 z-20 flex items-center gap-0.5 rounded-full bg-glass p-0.5 backdrop-blur-sm sm:right-3 sm:top-3">
+          <button
+            type="button"
+            onClick={togglePlay}
+            className="flex h-11 w-11 items-center justify-center rounded-full text-fg hover:bg-fg/15"
+            aria-label={playing ? "Pausar" : "Reproducir"}
+          >
+            {playing ? <Pause size={20} weight="fill" aria-hidden /> : <Play size={20} weight="fill" aria-hidden />}
+          </button>
+        </div>
+      )}
 
       <div className="absolute inset-x-0 bottom-0 z-20 h-[3px] bg-fg/15" aria-hidden>
         <div className="bg-brand-x h-full" style={{ width: `${progress * 100}%` }} />
