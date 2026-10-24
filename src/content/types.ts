@@ -86,6 +86,9 @@ export type LandingContent = {
     label: string;
     title: string;
     subtitle: string;
+    /** Versiones cortas para móvil (por debajo de 768 px). Sin ellas, móvil usa title y subtitle. */
+    titleMobile?: string;
+    subtitleMobile?: string;
     videoLabel: string;
     /** Pantalla final del vídeo: titular y texto del botón de repetir. Sin esto, el vídeo termina sin pantalla final. */
     videoEnd?: { title: string; replay: string };

@@ -21,10 +21,27 @@ export function Hero({ content }: { content: LandingContent }) {
           id="titular"
           className="mt-3 max-w-[1040px] font-display text-[clamp(1.5rem,1.1rem+2vw,2.75rem)] font-black leading-[1.1] tracking-[-0.015em] sm:mt-4"
         >
-          {hero.title}
+          {/* Un solo h1: en móvil el titular corto y desde tableta el completo (el que no toca va con display:none) */}
+          {hero.titleMobile ? (
+            <>
+              <span className="md:hidden">{hero.titleMobile}</span>
+              <span className="max-md:hidden">{hero.title}</span>
+            </>
+          ) : (
+            hero.title
+          )}
         </h1>
 
-        <p className="mt-3 max-w-[760px] text-[15px] leading-[1.5] text-fg-muted sm:text-base">{hero.subtitle}</p>
+        <p className="mt-3 max-w-[760px] text-[15px] leading-[1.5] text-fg-muted sm:text-base">
+          {hero.subtitleMobile ? (
+            <>
+              <span className="md:hidden">{hero.subtitleMobile}</span>
+              <span className="max-md:hidden">{hero.subtitle}</span>
+            </>
+          ) : (
+            hero.subtitle
+          )}
+        </p>
 
         <div className="hero-video mt-4 w-full lg:mt-4">
           <MainVsl slug={slug} label={hero.videoLabel} endCta={hero.videoEnd} />
