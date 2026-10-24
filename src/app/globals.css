@@ -592,7 +592,7 @@ html[data-brand-icons] .icon-brand { fill: url(#fivo-grad); }
 
 /* "Ya confían en Fivo" en móvil (ClientProfiles): cinta que avanza hacia la derecha en bucle. La pista lleva la lista
    dos veces, así que desplazarla media pista (una lista) deja todo igual que al principio: el reinicio no se nota.
-   Unos 3,5 s por tarjeta al cruzar la pantalla. Solo transform; se pausa al mantener pulsado o con el foco de teclado dentro. */
+   Unos 7,5 s por tarjeta al cruzar la pantalla. Solo transform; se pausa al mantener pulsado o con el foco de teclado dentro. */
 @keyframes profiles-marquee {
   from { transform: translate3d(-50%, 0, 0); }
   to { transform: translate3d(0, 0, 0); }
@@ -605,7 +605,7 @@ html[data-brand-icons] .icon-brand { fill: url(#fivo-grad); }
   user-select: none;
 }
 .profiles-track {
-  animation: profiles-marquee 11s linear infinite;
+  animation: profiles-marquee 22s linear infinite;
   will-change: transform;
 }
 .profiles-marquee[data-held] .profiles-track,

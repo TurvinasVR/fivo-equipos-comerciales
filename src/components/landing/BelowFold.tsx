@@ -16,14 +16,14 @@ export default function BelowFold() {
   return (
     <>
       <main className="relative z-[2] overflow-x-clip">
-        {/* Reseñas: lo primero tras la primera pantalla. Van en el HTML; no llevan imágenes ni librerías */}
-        <div className="mx-auto max-w-[1120px] px-5 pb-5 pt-5 lg:px-10 lg:pb-8 lg:pt-[25px]">
-          <Reviews headingLevel={2} className="" />
-        </div>
         <HowItWorks />
         <ProblemSection />
         <AskSection />
         <Proof />
+        {/* Reseñas: justo antes de las preguntas frecuentes, con el mismo espaciado que el resto de secciones */}
+        <div className="mx-auto max-w-[1120px] px-5 pb-5 pt-12 lg:px-10 lg:pb-8 lg:pt-20">
+          <Reviews headingLevel={2} className="" />
+        </div>
         <Faq />
       </main>
       <div className="relative z-[2]">
