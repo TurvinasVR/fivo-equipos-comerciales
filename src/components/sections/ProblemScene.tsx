@@ -204,7 +204,7 @@ function Pains({ pains, active, reduced, pick }: { pains: Problem["pains"]; acti
 /**
  * Bloque 4 fusionado con la comparativa. Primero "Hoy": nodos sueltos en tres grupos y los tres
  * dolores. Cuando el visitante ha recorrido la sección, los mismos nodos se unen en el grafo y
- * aparecen las cuatro tarjetas "Con Fivo". El interruptor permite volver a "Hoy".
+ * aparecen las cuatro tarjetas "Con Fivo".
  */
 /** `onCon` avisa cuando se llega a "Con Fivo" (o enseguida con movimiento reducido): ahí aparece el botón del bloque. */
 export default function ProblemScene({ onCon }: { onCon?: () => void }) {
@@ -256,12 +256,6 @@ export default function ProblemScene({ onCon }: { onCon?: () => void }) {
     touched.current = true;
     setActive(i);
   };
-  const choose = (m: Mode) => {
-    touched.current = true;
-    setSwitched(true);
-    setActive(-1);
-    setMode(m);
-  };
 
   const sr = (
     <table className="sr-only">
@@ -300,7 +294,7 @@ export default function ProblemScene({ onCon }: { onCon?: () => void }) {
         </div>
         {problem.compare ? (
           <div className="mt-8">
-            <ComparePanel rows={ROWS} mode="both" instant />
+            <ComparePanel rows={ROWS} />
           </div>
         ) : (
           <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -328,25 +322,15 @@ export default function ProblemScene({ onCon }: { onCon?: () => void }) {
         </div>
       </div>
 
-      {/* Final de la sección: interruptor y tarjetas */}
-      <div ref={zoneRef} className="mt-4 lg:mt-6">
-        <div className={`sticky top-[68px] z-20 flex justify-center py-1 lg:static lg:py-2 ${problem.compare ? "lg:pb-4" : ""}`}>
-          <div role="radiogroup" aria-label="Comparar cómo lo haces hoy con Fivo" className="relative inline-grid grid-cols-2 rounded-[8px] border border-line bg-glass p-1 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-4 has-[:focus-visible]:outline-accent">
-            <span aria-hidden className="absolute bottom-1 left-1 top-1 w-[calc(50%-4px)] rounded-[6px] bg-accent-soft border border-accent" style={{ transform: mode === "con" ? "translateX(100%)" : "none", transition: `transform 500ms ${EASE}` }} />
-            {(["hoy", "con"] as Mode[]).map((m) => (
-              <label key={m} className={`relative z-10 flex cursor-pointer items-center justify-center rounded-[6px] px-5 font-medium transition-colors ${problem.compare ? "min-h-[52px] min-w-[150px] text-[17px] font-semibold sm:min-w-[170px]" : "min-h-[44px] min-w-[120px] text-[15px]"}`} style={{ color: mode === m ? "var(--color-fg)" : "var(--color-fg-muted)" }}>
-                <input type="radio" name="comparar" value={m} checked={mode === m} onChange={() => choose(m)} className="sr-only" />
-                {m === "hoy" ? "Hoy" : "Con Fivo"}
-              </label>
-            ))}
-          </div>
-        </div>
+      {/* Final de la sección: la comparación con las dos columnas a la vista. Al llegar aquí, el grafo de arriba pasa
+          solo a "Con Fivo" (ya no hay interruptor: la tabla dice el antes y el después a la vez). */}
+      <div ref={zoneRef} className="mt-8 lg:mt-10">
         {problem.compare ? (
-          <div ref={deepRef} className="mt-3 md:mt-4">
-            <ComparePanel rows={ROWS} mode={mode} />
+          <div ref={deepRef}>
+            <ComparePanel rows={ROWS} />
           </div>
         ) : (
-          <div ref={deepRef} className="mt-3 grid gap-3 md:mt-4 md:grid-cols-2 md:gap-4" style={{ pointerEvents: shown ? "auto" : "none" }}>
+          <div ref={deepRef} className="grid gap-3 md:grid-cols-2 md:gap-4" style={{ pointerEvents: shown ? "auto" : "none" }}>
             {ROWS.map((r) => (
               <Card key={r.topic} row={r} mode={mode} both={false} shown={shown} />
             ))}

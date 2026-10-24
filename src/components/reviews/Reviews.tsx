@@ -66,24 +66,25 @@ export default function Reviews({ headingLevel = 3, className = "mt-14 lg:mt-20"
         aria-roledescription="carrusel"
         aria-label="Opiniones sobre Fivo"
         tabIndex={0}
-        className="mt-6 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain rounded-xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="mt-5 flex snap-x snap-mandatory items-start gap-4 overflow-x-auto overscroll-x-contain rounded-xl [scrollbar-width:none] sm:mt-6 [&::-webkit-scrollbar]:hidden"
       >
+        {/* Cada tarjeta mide lo que su texto (items-start): el nombre va siempre a la misma distancia de la reseña */}
         {REVIEWS.map((r, i) => (
           <figure
             key={r.name}
             role="group"
             aria-roledescription="diapositiva"
             aria-label={`${i + 1} de ${REVIEWS.length}`}
-            className="flex shrink-0 basis-[85%] snap-start flex-col gap-4 rounded-xl border border-line bg-surface p-6 sm:basis-[calc((100%-16px)/2)] lg:basis-[calc((100%-32px)/3)]"
+            className="flex shrink-0 basis-[85%] snap-start flex-col rounded-xl border border-line bg-surface p-5 sm:basis-[calc((100%-16px)/2)] sm:p-6 lg:basis-[calc((100%-32px)/3)]"
           >
             <div className="flex gap-0.5" role="img" aria-label={`${r.stars} estrellas`}>
               {Array.from({ length: r.stars }, (_, k) => (
                 <Star key={k} size={16} weight="fill" className="icon-brand" aria-hidden />
               ))}
             </div>
-            <blockquote className="text-[15px] leading-relaxed text-fg">{r.text}</blockquote>
-            {r.translated && <span className="text-[13px] text-fg-muted">Traducido del inglés</span>}
-            <figcaption className="mt-auto">
+            <blockquote className="mt-3 text-[15px] leading-[1.6] text-fg sm:mt-4">{r.text}</blockquote>
+            {r.translated && <span className="mt-2 text-[13px] text-fg-muted">Traducido del inglés</span>}
+            <figcaption className="mt-5 sm:mt-6">
               <span className="block font-semibold text-fg">{r.name}</span>
               <span className="block text-[14px] text-fg-muted">{[r.place, r.sector].join(" · ")}</span>
             </figcaption>

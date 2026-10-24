@@ -1,139 +1,203 @@
 "use client";
 
+import { useId } from "react";
+import { ArrowDown, ArrowRight } from "@phosphor-icons/react";
 import type { LandingContent } from "@/content/types";
+import { useInView, useReducedMotion } from "@/lib/hooks";
 
 const EASE = "cubic-bezier(0.16,1,0.3,1)";
 
 type Row = LandingContent["problem"]["rows"][number];
-/** "both": las dos columnas a la vez y sin animación (movimiento reducido). */
-type PanelMode = "hoy" | "con" | "both";
-
-/** Posiciones de los nodos de cada fila (viewBox 96x44). Las mismas en "Hoy" y en "Con Fivo": se unen sin moverse. */
-const LAYOUTS: [number, number][][] = [
-  [[10, 30], [34, 10], [58, 34], [86, 14]],
-  [[8, 14], [30, 34], [52, 12], [74, 32], [90, 10]],
-  [[12, 24], [40, 8], [60, 36], [88, 22]],
-  [[10, 12], [32, 32], [56, 14], [80, 34]],
-];
-
-/** Nodos sueltos y apagados ("Hoy") o unidos y encendidos en accent ("Con Fivo"). */
-function Nodes({ index, linked, delay, instant }: { index: number; linked: boolean; delay: number; instant: boolean }) {
-  const pts = LAYOUTS[index % LAYOUTS.length];
-  const t = (d: number) => (instant ? "none" : `all 700ms ${EASE} ${d}ms`);
-  return (
-    <svg viewBox="0 0 96 44" width="96" height="44" className="h-[44px] w-[96px] shrink-0 overflow-visible" aria-hidden>
-      {pts.slice(1).map(([x, y], i) => {
-        const [px, py] = pts[i];
-        return (
-          <line
-            key={i}
-            x1={px}
-            y1={py}
-            x2={x}
-            y2={y}
-            stroke="var(--color-accent)"
-            strokeWidth="1.2"
-            strokeOpacity="0.75"
-            pathLength={1}
-            strokeDasharray={1}
-            strokeDashoffset={linked ? 0 : 1}
-            style={{ transition: t(delay + i * 90) }}
-          />
-        );
-      })}
-      {pts.map(([x, y], i) => (
-        <circle
-          key={i}
-          cx={x}
-          cy={y}
-          r={linked ? 3.6 : 3.2}
-          fill={linked ? "var(--color-accent)" : "var(--color-fg-subtle)"}
-          fillOpacity={linked ? 1 : 0.7}
-          style={{ transition: t(delay + i * 90), filter: linked ? "drop-shadow(0 0 4px var(--color-accent))" : "none" }}
-        />
-      ))}
-    </svg>
-  );
-}
-
-/** Flecha fina entre el "Hoy" y el "Con Fivo". */
-function Arrow() {
-  return (
-    <svg viewBox="0 0 28 12" width="28" height="12" className="hidden shrink-0 md:block" aria-hidden>
-      <path d="M1 6h24M20 1.5 26 6l-6 4.5" fill="none" stroke="var(--color-line-strong)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
+type Pt = [number, number];
 
 /**
- * Comparación "Hoy" y "Con Fivo": un solo panel con una fila por tema y divisores de 1px. Las etiquetas de las
- * columnas salen una vez, en la cabecera. Al pasar a "Con Fivo", la columna "Hoy" se atenúa y la de "Con Fivo"
- * se enciende fila a fila, con los nodos de cada fila conectándose; al volver a "Hoy" ocurre al revés.
+ * Nodos de cada fila (viewBox 120x64). `loose`: dónde están hoy, dispersos. `graph`: dónde quedan con Fivo, alrededor
+ * del nodo central (como el grafo de "Cómo funciona"). `links`: uniones entre nodos además de las del centro.
  */
-export function ComparePanel({ rows, mode, instant = false }: { rows: Row[]; mode: PanelMode; instant?: boolean }) {
-  const con = mode === "con" || mode === "both";
-  const hoyDim = mode === "con";
-  const n = rows.length;
-  // Al encender, fila a fila de arriba abajo; al apagar, en orden inverso
-  const delay = (i: number) => (instant ? 0 : mode === "con" ? i * 170 : (n - 1 - i) * 90);
+const HUB: Pt = [60, 32];
+const LAYOUTS: { loose: Pt[]; graph: Pt[]; links: [number, number][] }[] = [
+  { loose: [[10, 42], [42, 10], [80, 50], [108, 18], [56, 30]], graph: [[22, 16], [32, 52], [88, 10], [102, 42], [70, 56]], links: [[0, 1], [2, 3]] },
+  { loose: [[8, 14], [32, 46], [68, 8], [96, 34], [112, 56]], graph: [[16, 32], [40, 8], [92, 14], [104, 50], [50, 56]], links: [[0, 1], [3, 4]] },
+  { loose: [[12, 28], [48, 54], [44, 8], [88, 14], [106, 48]], graph: [[24, 50], [20, 14], [78, 8], [106, 30], [82, 56]], links: [[1, 2], [3, 4]] },
+  { loose: [[20, 10], [8, 52], [62, 42], [84, 8], [110, 36]], graph: [[14, 40], [36, 10], [94, 18], [100, 52], [58, 58]], links: [[0, 1], [2, 3]] },
+];
+
+/**
+ * Hoy: puntos grises sueltos. Con Fivo: los mismos puntos se desplazan hasta el grafo, se encienden y se unen al nodo
+ * central con el degradado de marca. `on` lanza la transición (al entrar en pantalla); `instant` la quita.
+ */
+function Graph({ index, linked, on, delay, instant }: { index: number; linked: boolean; on: boolean; delay: number; instant: boolean }) {
+  const gid = useId();
+  const L = LAYOUTS[index % LAYOUTS.length];
+  const joined = linked && on;
+  const tr = (prop: string, d: number, ms = 700) => (instant ? "none" : `${prop} ${ms}ms ${EASE} ${delay + d}ms`);
+  const lines: [Pt, Pt][] = [...L.graph.map((p) => [HUB, p] as [Pt, Pt]), ...L.links.map(([a, b]) => [L.graph[a], L.graph[b]] as [Pt, Pt])];
 
   return (
-    <div className="card overflow-hidden">
-      {/* Cabecera de columnas (escritorio) */}
-      <div className="hidden grid-cols-[minmax(0,0.9fr)_minmax(0,1.3fr)_28px_minmax(0,1.3fr)] items-center gap-x-6 border-b border-line px-7 py-3.5 text-[14px] font-semibold md:grid">
-        <span aria-hidden />
-        <span className="text-fg-muted" style={{ opacity: hoyDim ? 0.75 : 1, transition: instant ? "none" : `opacity 500ms ${EASE}` }}>
-          Hoy
-        </span>
-        <span aria-hidden />
-        <span className="text-accent">Con Fivo</span>
-      </div>
-      {/* Leyenda (móvil): también una sola vez */}
-      <div className="flex items-center gap-6 border-b border-line px-5 py-3 text-[14px] font-semibold md:hidden" aria-hidden>
-        <span className="flex items-center gap-2 text-fg-muted">
-          <i className="status-dot text-fg-subtle" />
-          Hoy
-        </span>
-        <span className="flex items-center gap-2 text-accent">
-          <i className="status-dot" />
-          Con Fivo
-        </span>
+    <svg viewBox="0 0 120 64" className="h-[45px] w-[84px] shrink-0 overflow-visible sm:h-[52px] sm:w-[98px] lg:h-[64px] lg:w-[120px]" aria-hidden>
+      {linked && (
+        <defs>
+          <linearGradient id={gid} x1="0" y1="0" x2="120" y2="64" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stopColor="var(--color-grad-a)" />
+            <stop offset="1" stopColor="var(--color-grad-b)" />
+          </linearGradient>
+        </defs>
+      )}
+      {linked &&
+        lines.map(([[x1, y1], [x2, y2]], i) => (
+          <line
+            key={i}
+            x1={x1}
+            y1={y1}
+            x2={x2}
+            y2={y2}
+            stroke={`url(#${gid})`}
+            strokeWidth="1.4"
+            strokeLinecap="round"
+            pathLength={1}
+            strokeDasharray={1}
+            strokeDashoffset={joined ? 0 : 1}
+            style={{ transition: tr("stroke-dashoffset", 450 + i * 60, 600) }}
+          />
+        ))}
+      {linked && (
+        <g style={{ transformOrigin: `${HUB[0]}px ${HUB[1]}px`, transform: joined ? "none" : "scale(0)", transition: tr("transform", 380, 600) }}>
+          <circle cx={HUB[0]} cy={HUB[1]} r="12" fill={`url(#${gid})`} fillOpacity="0.22" />
+          <circle cx={HUB[0]} cy={HUB[1]} r="6" fill={`url(#${gid})`} />
+        </g>
+      )}
+      {L.graph.map(([gx, gy], i) => {
+        const [lx, ly] = L.loose[i];
+        // Con Fivo parte de las posiciones de hoy y llega al grafo; la columna Hoy se queda en las de hoy
+        const dx = joined ? 0 : lx - gx;
+        const dy = joined ? 0 : ly - gy;
+        return (
+          <g key={i} style={{ transform: `translate(${dx}px, ${dy}px)`, transition: tr("transform", i * 50) }}>
+            {linked && <circle cx={gx} cy={gy} r="7" fill="var(--color-accent)" style={{ opacity: joined ? 0.22 : 0, transition: tr("opacity", 300 + i * 50) }} />}
+            <circle
+              cx={gx}
+              cy={gy}
+              r={joined ? 3.6 : 3}
+              fill={joined ? "var(--color-fg)" : "var(--color-fg-subtle)"}
+              style={{ transition: tr("fill", 250 + i * 50) + (instant ? "" : `, r 400ms ${EASE} ${delay + 250 + i * 50}ms`) }}
+            />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/** Flecha entre el antes y el después: un círculo con borde en degradado sobre la unión de las dos columnas. */
+function ArrowBadge({ down = false, className = "" }: { down?: boolean; className?: string }) {
+  const Icon = down ? ArrowDown : ArrowRight;
+  return (
+    <span aria-hidden className={`ring-brand flex items-center justify-center rounded-full [--inner:var(--color-surface)] ${className}`}>
+      <Icon size={down ? 16 : 18} weight="bold" className="text-accent" />
+    </span>
+  );
+}
+
+const conTint = "color-mix(in srgb, var(--color-accent) 7%, var(--color-surface))";
+const hoyText = "text-[15px] leading-snug text-fg-muted";
+const conText = "text-[16px] font-semibold leading-snug text-fg";
+
+/**
+ * Comparación "Hoy" y "Con Fivo", siempre con las dos columnas a la vista. Escritorio (lg): una tabla con la columna
+ * "Con Fivo" destacada. Móvil y tableta: una tarjeta por fila con el antes y el después (apilados en móvil, en paralelo
+ * desde sm). Al entrar en pantalla, los puntos de "Con Fivo" se unen fila a fila; con movimiento reducido ya están unidos.
+ */
+export function ComparePanel({ rows }: { rows: Row[] }) {
+  const reduced = useReducedMotion();
+  const [ref, inView] = useInView<HTMLDivElement>({ threshold: 0.25 });
+  const on = inView || reduced;
+  const delay = (i: number) => (reduced ? 0 : 200 + i * 160);
+
+  return (
+    <div ref={ref} data-compare>
+      {/* Escritorio */}
+      <div className="card hidden overflow-hidden lg:block">
+        <table className="w-full table-fixed border-collapse text-left">
+          <caption className="sr-only">Cómo lo haces hoy y cómo es con Fivo</caption>
+          <colgroup>
+            <col className="w-[25%]" />
+            <col className="w-[35%]" />
+            <col />
+          </colgroup>
+          <thead>
+            <tr className="text-[14px] font-semibold">
+              <th scope="col" className="px-7 py-4">
+                <span className="sr-only">Tema</span>
+              </th>
+              <th scope="col" className="px-7 py-4 text-fg-muted">
+                <span className="flex items-center gap-2">
+                  <i className="status-dot text-fg-subtle" aria-hidden />
+                  Hoy
+                </span>
+              </th>
+              <th scope="col" className="relative py-4 pl-12 pr-7 text-fg" style={{ background: conTint }}>
+                <span aria-hidden className="bg-brand-x absolute inset-x-0 top-0 h-[2px]" />
+                <span className="flex items-center gap-2">
+                  <i className="status-dot status-dot--brand" aria-hidden />
+                  Con Fivo
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={r.topic} className="border-t border-line">
+                <th scope="row" className="px-7 py-6 align-middle font-display text-[19px] font-bold leading-snug text-fg">
+                  {r.topic}
+                </th>
+                <td className="py-6 pl-7 pr-10 align-middle">
+                  <div className="flex items-center gap-5">
+                    <Graph index={i} linked={false} on={on} delay={0} instant />
+                    <p className={hoyText}>{r.today}</p>
+                  </div>
+                </td>
+                <td className="relative py-6 pl-12 pr-7 align-middle" style={{ background: conTint }}>
+                  <ArrowBadge className="absolute left-0 top-1/2 size-9 -translate-x-1/2 -translate-y-1/2" />
+                  <div className="flex items-center gap-5">
+                    <Graph index={i} linked on={on} delay={delay(i)} instant={reduced} />
+                    <p className={conText}>{r.fivo}</p>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      <ul className="divide-y divide-line">
+      {/* Móvil y tableta: una tarjeta por fila */}
+      <ul className="grid gap-3 lg:hidden">
         {rows.map((r, i) => (
-          <li
-            key={r.topic}
-            className="grid gap-3 px-5 py-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.3fr)_28px_minmax(0,1.3fr)] md:items-center md:gap-x-6 md:px-7 md:py-6"
-          >
-            <h3 className="font-sans text-[17px] font-semibold leading-snug text-fg">{r.topic}</h3>
-
-            <div
-              className="flex items-center gap-4"
-              style={{ opacity: hoyDim ? 0.75 : 1, transition: instant ? "none" : `opacity 600ms ${EASE} ${delay(i)}ms` }}
-            >
-              <Nodes index={i} linked={false} delay={0} instant={instant} />
-              <p className="text-[15px] leading-snug text-fg-muted">
-                <span className="sr-only">Hoy: </span>
-                {r.today}
-              </p>
-            </div>
-
-            <Arrow />
-
-            <div className="flex items-center gap-4">
-              <Nodes index={i} linked={con} delay={delay(i)} instant={instant} />
-              <p
-                className="text-[16px] font-semibold leading-snug md:font-medium"
-                style={{
-                  color: con ? "var(--color-fg)" : "var(--color-fg-muted)",
-                  opacity: con ? 1 : 0.8,
-                  transition: instant ? "none" : `color 500ms ${EASE} ${delay(i)}ms, opacity 500ms ${EASE} ${delay(i)}ms`,
-                }}
-              >
-                <span className="sr-only">Con Fivo: </span>
-                {r.fivo}
-              </p>
+          <li key={r.topic} className="card p-4 sm:p-5">
+            <h3 className="font-display text-[18px] font-bold leading-snug text-fg">{r.topic}</h3>
+            {/* Antes y después en orden de lectura: "Hoy" y su texto, después "Con Fivo" y el suyo */}
+            <div className="mt-3 grid sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center sm:gap-3">
+              <div className="flex items-center gap-3 px-1 pb-2 pt-1 sm:p-0">
+                <Graph index={i} linked={false} on={on} delay={0} instant />
+                <div>
+                  <p className="text-[12px] font-semibold text-fg-muted">Hoy</p>
+                  <p className={`mt-0.5 ${hoyText}`}>{r.today}</p>
+                </div>
+              </div>
+              <div className="relative z-[1] -mb-4 flex justify-center sm:mb-0" aria-hidden>
+                <span className="sm:hidden">
+                  <ArrowBadge down className="size-8" />
+                </span>
+                <span className="max-sm:hidden">
+                  <ArrowBadge className="size-9" />
+                </span>
+              </div>
+              <div className="ring-brand flex items-center gap-3 rounded-[10px] px-3 pb-3 pt-5 sm:pt-3 [--inner:color-mix(in_srgb,var(--color-accent)_7%,var(--color-surface))]">
+                <Graph index={i} linked on={on} delay={delay(i)} instant={reduced} />
+                <div>
+                  <p className="text-[12px] font-semibold text-accent">Con Fivo</p>
+                  <p className={`mt-0.5 ${conText}`}>{r.fivo}</p>
+                </div>
+              </div>
             </div>
           </li>
         ))}
