@@ -579,3 +579,39 @@ html[data-booking] .cal-slot { display: inline-block; }
 /* Iconos con el degradado (el <linearGradient id="fivo-grad"> está en el layout). Se activa tras la carga: ver BrandIcons */
 .icon-brand { fill: var(--color-accent); }
 html[data-brand-icons] .icon-brand { fill: url(#fivo-grad); }
+
+/* "Ya confían en Fivo" en móvil (ClientProfiles): cinta que avanza hacia la derecha en bucle. La pista lleva la lista
+   dos veces, así que desplazarla media pista (una lista) deja todo igual que al principio: el reinicio no se nota.
+   Unos 3,5 s por tarjeta al cruzar la pantalla. Solo transform; se pausa al mantener pulsado o con el foco de teclado dentro. */
+@keyframes profiles-marquee {
+  from { transform: translate3d(-50%, 0, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+.profiles-marquee {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent);
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.profiles-track {
+  animation: profiles-marquee 11s linear infinite;
+  will-change: transform;
+}
+.profiles-marquee[data-held] .profiles-track,
+.profiles-marquee:has(:focus-visible) .profiles-track {
+  animation-play-state: paused;
+}
+/* Movimiento reducido: sin animación, una fila que se desliza con el dedo */
+@media (prefers-reduced-motion: reduce) {
+  .profiles-marquee {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 20px;
+    scrollbar-width: none;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .profiles-marquee::-webkit-scrollbar { display: none; }
+  .profiles-track { animation: none; }
+}
