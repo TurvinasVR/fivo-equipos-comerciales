@@ -42,7 +42,7 @@ export function StickyCta() {
   return (
     <div
       ref={bar}
-      className="sticky-cta fixed inset-x-0 bottom-0 z-50 border-t border-line bg-bg/95 px-4 pt-2.5 backdrop-blur-sm transition-transform duration-300 md:hidden"
+      className="sticky-cta fixed inset-x-0 bottom-0 z-50 border-t border-line bg-bg/95 px-5 pt-2 backdrop-blur-sm transition-transform duration-300 md:hidden"
       style={{
         paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))",
         transform: hidden ? "translateY(125%)" : "none",

@@ -48,7 +48,7 @@ export function CtaBlock({
   className?: string;
 }) {
   return (
-    <div className={`flex flex-col gap-2.5 max-sm:w-full max-sm:items-stretch max-sm:text-center ${align === "center" ? "items-center text-center" : "items-start"} ${className}`}>
+    <div className={`flex flex-col gap-2.5 max-md:gap-2 max-sm:w-full max-sm:items-stretch max-sm:text-center ${align === "center" ? "items-center text-center" : "items-start"} ${className}`}>
       <CtaButton position={position} size={size} heroAnchor={heroAnchor} blockCta={blockCta} />
       <CtaHint />
     </div>
