@@ -218,19 +218,15 @@ export const equiposComerciales: LandingContent = {
       FAQ_TRANSCRIBE,
       {
         q: "¿Mis closers tienen que cambiar algo de cómo trabajan?",
-        a: "El asistente de Fivo entra en las reuniones de Zoom, Google Meet y Microsoft Teams y las añade al grafo. Fivo se conecta a las herramientas que ya usa el equipo.",
+        a: "El asistente de Fivo entra en las reuniones de Zoom, Google Meet y Microsoft Teams y las añade al grafo. Fivo también cuenta con una extensión de grabación de pantalla. Fivo se conecta a las herramientas que ya usa el equipo.",
       },
       {
         q: "¿El cliente sabe que la llamada se graba?",
         a: "",
       },
       {
-        q: "¿Dónde se guardan las llamadas y quién puede verlas?",
-        a: "Los datos se alojan en la UE y van cifrados en tránsito y en reposo. Tú decides quién ve cada llamada, con control de acceso por usuario y equipo. Fivo cumple RGPD y SOC 2.",
-      },
-      {
         q: "¿Con qué CRM y herramientas de videollamada funciona?",
-        a: "Entra en las reuniones de Zoom, Google Meet y Microsoft Teams. Se integra con Slack, Notion, Google Drive, HubSpot, CRM, Zapier y webhooks. Además, su memoria se conecta por MCP a Claude, ChatGPT y Gemini.",
+        a: "Entra en las reuniones de Zoom, Google Meet y Microsoft Teams. Se integra con Slack, Notion, Google Drive, HubSpot, Zapier, webhooks y más. Además, su memoria se conecta por MCP a Claude, ChatGPT y Gemini.",
       },
       {
         q: "¿Cuánto tarda en estar funcionando?",
