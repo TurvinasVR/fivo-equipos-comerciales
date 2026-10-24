@@ -533,11 +533,6 @@ html[data-hero3d] .hero-graph-svg {
   .ask-grid { grid-template-columns: 1fr 250px; grid-template-areas: "chat graph" "chat src"; grid-template-rows: auto 1fr; }
 }
 
-/* Los subtítulos del VSL se pintan en el componente; la caja nativa del navegador se oculta. */
-video::-webkit-media-text-track-container {
-  display: none !important;
-}
-
 /* /gracias: el botón del calendario solo existe si hay fecha (la marca el script de ThanksPage antes de pintar) */
 .cal-slot { display: none; }
 html[data-booking] .cal-slot { display: inline-block; }

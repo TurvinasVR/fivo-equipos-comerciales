@@ -15,8 +15,6 @@ type LandingRuntime = {
     mobileSrc: string;
     /** Miniatura. Vacío = miniatura de sustitución. */
     poster: string;
-    /** Subtítulos WebVTT en español. Vacío = sin subtítulos (el VSL real aún no tiene .vtt). */
-    captions: string;
     /**
      * Segundo del vídeo en el que empieza la llamada a la acción. Al llegar a él
      * la reproducción dispara video_cta_reached (una sola vez). null = no se envía.
@@ -41,7 +39,6 @@ const env = {
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL?.trim() || "",
   videoUrl: process.env.NEXT_PUBLIC_VIDEO_URL?.trim() || "",
   videoPoster: process.env.NEXT_PUBLIC_VIDEO_POSTER_URL?.trim() || "",
-  videoCaptions: process.env.NEXT_PUBLIC_VIDEO_CAPTIONS_URL?.trim() || "",
   videoCtaSecond: process.env.NEXT_PUBLIC_VIDEO_CTA_SECOND?.trim() || "",
   ga4: process.env.NEXT_PUBLIC_GA4_ID?.trim() || "",
   metaPixel: process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim() || "",
@@ -55,13 +52,12 @@ const env = {
  */
 const VSL = { src: "/video/vsl-01.mp4", mobileSrc: "/video/vsl-01-720.mp4", poster: "/img/vsl-01-poster.webp" };
 
-/** Vídeo, miniatura y subtítulos de cada landing. */
+/** Vídeo y miniatura de cada landing. */
 const landingRuntime = (): LandingRuntime => ({
   video: {
     src: env.videoUrl || VSL.src,
     mobileSrc: env.videoUrl ? "" : VSL.mobileSrc,
     poster: env.videoPoster || VSL.poster,
-    captions: env.videoCaptions,
     ctaSecond: env.videoCtaSecond === "" || env.videoCtaSecond === "none" ? null : Number(env.videoCtaSecond) || null,
   },
   ready: { video: true, testimonials: false },

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowCounterClockwise, ClosedCaptioning, Pause, Play, SpeakerHigh, SpeakerSlash } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, Pause, Play } from "@phosphor-icons/react";
 import { siteConfig } from "@/config/site";
 import type { LandingSlug } from "@/content/types";
 import { track, trackOnce } from "@/lib/analytics";
@@ -17,9 +17,11 @@ type Props = {
   /** Versión ligera para móvil. Se elige una sola vez, al asignar el vídeo, según MOBILE_VIDEO_MEDIA. */
   mobileSrc?: string;
   poster: string;
-  captions: string;
-  /** Empieza solo y en silencio (VSL de la primera pantalla). */
-  autoplayMuted?: boolean;
+  /**
+   * VSL de la primera pantalla: intenta arrancar solo y con sonido. Si el navegador lo bloquea (casi siempre, y siempre
+   * en iPhone), espera con el póster y el botón de reproducir. Nunca arranca en silencio.
+   */
+  autoplay?: boolean;
   /** Eventos de analítica del VSL principal. */
   trackEvents?: boolean;
   /** Segundo en que empieza la llamada a la acción (video_cta_reached). null = no se envía. */
@@ -34,8 +36,7 @@ export function VideoPlayer({
   src,
   mobileSrc,
   poster,
-  captions,
-  autoplayMuted = false,
+  autoplay = false,
   trackEvents = false,
   ctaSecond = null,
   label,
@@ -46,15 +47,14 @@ export function VideoPlayer({
   // src asignado (carga diferida). La versión se fija al asignarlo: girar o redimensionar no recarga el vídeo.
   const [armedSrc, setArmedSrc] = useState<string | null>(null);
   const armed = armedSrc !== null;
-  const setArmed = useCallback(
-    () => setArmedSrc((cur) => cur ?? (mobileSrc && window.matchMedia(MOBILE_VIDEO_MEDIA).matches ? mobileSrc : src)),
+  const pickSrc = useCallback(
+    () => (mobileSrc && window.matchMedia(MOBILE_VIDEO_MEDIA).matches ? mobileSrc : src),
     [src, mobileSrc],
   );
+  const setArmed = useCallback(() => setArmedSrc((cur) => cur ?? pickSrc()), [pickSrc]);
   const [playing, setPlaying] = useState(false);
   const [started, setStarted] = useState(false);
   const [framed, setFramed] = useState(false); // ya hay un fotograma de vídeo: el póster se retira
-  const [muted, setMuted] = useState(true);
-  const [ccOn, setCcOn] = useState(true);
   const [progress, setProgress] = useState(0);
   const [ended, setEnded] = useState(false);
   const pulsed = useRef(false);
@@ -72,68 +72,31 @@ export function VideoPlayer({
     return () => window.removeEventListener("load", go);
   }, [setArmed]);
 
-  // Autoplay en silencio, salvo con movimiento reducido o ahorro de datos.
+  // Autoplay con sonido, salvo con movimiento reducido o ahorro de datos. Si el navegador lo bloquea, se queda el póster
+  // con el botón de reproducir: no se reintenta en silencio.
   useEffect(() => {
-    if (!armed || !autoplayMuted) return;
+    if (!armed || !autoplay) return;
     const v = ref.current;
     if (!v) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
     if (reduce || saveData) return;
-    v.muted = true;
     v.play().catch(() => {
       /* el navegador lo bloquea: queda el botón de reproducir */
     });
-  }, [armed, autoplayMuted]);
+  }, [armed, autoplay]);
 
-  // Subtítulos propios: el navegador no los dibuja (su caja nativa provocaba un salto de CLS al arrancar);
-  // la pista queda en "hidden" y sus frases se pintan en una capa absoluta.
-  const [cue, setCue] = useState("");
-  const applyCaptions = useCallback(() => {
-    const t = ref.current?.textTracks[0];
-    if (!t) return;
-    t.mode = "hidden";
-    t.oncuechange = () => setCue(Array.from(t.activeCues ?? []).map((c) => (c as VTTCue).text.replace(/<[^>]+>/g, "")).join(" "));
-  }, []);
-
-  useEffect(() => {
-    applyCaptions();
-  }, [applyCaptions, armed]);
-
-  const toggleMain = () => {
-    const v = ref.current;
-    if (!v) {
-      setArmed();
-      return;
-    }
-    if (!armed) setArmed();
-    // Primer toque con sonido apagado: se activa el sonido y sigue reproduciendo.
-    if (playing && v.muted) {
-      v.muted = false;
-      setMuted(false);
-      return;
-    }
-    if (v.paused) {
-      v.muted = false;
-      setMuted(false);
-      void v.play();
-    } else {
-      v.pause();
-    }
-  };
-
+  // Reproducir (siempre con sonido) o pausar. Si el vídeo aún no tiene src (toque antes de la carga diferida), se le
+  // pone aquí mismo para que play() vaya dentro del gesto: iPhone no deja reproducir con sonido fuera de él.
   const togglePlay = () => {
     const v = ref.current;
     if (!v) return;
+    if (!armed) {
+      v.src = pickSrc();
+      setArmed();
+    }
     if (v.paused) void v.play();
     else v.pause();
-  };
-
-  const toggleMute = () => {
-    const v = ref.current;
-    if (!v) return;
-    v.muted = !v.muted;
-    setMuted(v.muted);
   };
 
   const onTimeUpdate = () => {
@@ -160,7 +123,6 @@ export function VideoPlayer({
     void v.play();
   };
 
-  const showAudioHint = playing && muted && !ended;
   const showBigPlay = !playing;
 
   return (
@@ -174,7 +136,6 @@ export function VideoPlayer({
         className="absolute inset-0 h-full w-full object-cover"
         src={armedSrc ?? undefined}
         preload="metadata"
-        muted
         playsInline
         aria-label={label}
         onPlaying={() => setFramed(true)}
@@ -182,7 +143,7 @@ export function VideoPlayer({
           setPlaying(true);
           setStarted(true);
           setEnded(false);
-          if (trackEvents) trackOnce("video_play", { muted: ref.current?.muted ?? true });
+          if (trackEvents) trackOnce("video_play", { muted: ref.current?.muted ?? false });
         }}
         onPause={() => setPlaying(false)}
         onEnded={() => {
@@ -193,10 +154,7 @@ export function VideoPlayer({
           }
         }}
         onTimeUpdate={onTimeUpdate}
-        onLoadedMetadata={applyCaptions}
-      >
-        {captions && <track kind="captions" srcLang="es" label="Español" src={captions} default />}
-      </video>
+      />
 
       {/* Póster como imagen normal: es el elemento más grande de la primera pantalla y así se pide y se pinta con prioridad */}
       <Image
@@ -204,22 +162,22 @@ export function VideoPlayer({
         alt=""
         fill
         sizes="(min-width: 1024px) 760px, 100vw"
-        preload={autoplayMuted}
-        fetchPriority={autoplayMuted ? "high" : undefined}
-        loading={autoplayMuted ? "eager" : undefined}
+        preload={autoplay}
+        fetchPriority={autoplay ? "high" : undefined}
+        loading={autoplay ? "eager" : undefined}
         unoptimized={/^https?:/.test(poster)}
         className="pointer-events-none object-cover transition-opacity duration-300"
         style={{ opacity: framed ? 0 : 1 }}
       />
 
-      {/* Superficie principal: reproducir, o activar el sonido si va en silencio */}
+      {/* Superficie principal: reproducir o pausar */}
       <button
         type="button"
-        onClick={toggleMain}
+        onClick={togglePlay}
         tabIndex={-1}
         inert={ended || undefined}
         className="absolute inset-0 z-10 flex cursor-pointer items-center justify-center bg-transparent"
-        aria-label={showAudioHint ? "Activar el sonido" : playing ? "Pausar el vídeo" : "Reproducir el vídeo"}
+        aria-label={playing ? "Pausar el vídeo" : "Reproducir el vídeo"}
       >
         {showBigPlay && (
           <span className="flex h-16 w-16 items-center justify-center rounded-full bg-fg text-bg transition-transform duration-200 sm:h-20 sm:w-20">
@@ -228,20 +186,7 @@ export function VideoPlayer({
         )}
       </button>
 
-      {showAudioHint && (
-        <div className="pointer-events-none absolute left-3 top-3 z-20 flex items-center gap-2 rounded-full bg-glass px-3.5 py-2 text-sm font-medium text-fg backdrop-blur-sm sm:left-4 sm:top-4">
-          <SpeakerSlash size={18} weight="bold" aria-hidden />
-          Pulsa para oír
-        </div>
-      )}
-
-      {ccOn && cue && (
-        <div aria-hidden className="pointer-events-none absolute inset-x-4 bottom-5 z-20 flex justify-center">
-          <span className="max-w-full whitespace-pre-line rounded-[8px] bg-glass px-3 py-1.5 text-center text-[15px] leading-snug text-fg sm:text-[17px]">{cue}</span>
-        </div>
-      )}
-
-      {/* Controles: pausar, sonido y subtítulos */}
+      {/* Control: reproducir y pausar */}
       <div inert={ended || undefined} className="absolute right-2 top-2 z-20 flex items-center gap-0.5 rounded-full bg-glass p-0.5 backdrop-blur-sm sm:right-3 sm:top-3">
         <button
           type="button"
@@ -250,24 +195,6 @@ export function VideoPlayer({
           aria-label={playing ? "Pausar" : "Reproducir"}
         >
           {playing ? <Pause size={20} weight="fill" aria-hidden /> : <Play size={20} weight="fill" aria-hidden />}
-        </button>
-        <button
-          type="button"
-          onClick={toggleMute}
-          className="flex h-11 w-11 items-center justify-center rounded-full text-fg hover:bg-fg/15"
-          aria-label={muted ? "Activar el sonido" : "Silenciar"}
-          aria-pressed={!muted}
-        >
-          {muted ? <SpeakerSlash size={20} aria-hidden /> : <SpeakerHigh size={20} aria-hidden />}
-        </button>
-        <button
-          type="button"
-          onClick={() => setCcOn((v) => !v)}
-          className={`flex h-11 w-11 items-center justify-center rounded-full hover:bg-fg/15 ${ccOn ? "text-accent" : "text-fg"}`}
-          aria-label="Subtítulos"
-          aria-pressed={ccOn}
-        >
-          <ClosedCaptioning size={22} weight={ccOn ? "fill" : "regular"} aria-hidden />
         </button>
       </div>
 
@@ -306,8 +233,7 @@ export function MainVsl({ slug, label, endCta }: { slug: LandingSlug; label: str
       src={video.src || "/video/placeholder.mp4"}
       mobileSrc={video.mobileSrc || undefined}
       poster={video.poster || "/img/video-poster.webp"}
-      captions={video.captions}
-      autoplayMuted
+      autoplay
       trackEvents
       ctaSecond={video.ctaSecond}
       label={label}
