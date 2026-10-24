@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { watchCtas } from "@/lib/ctaFlow";
-import { CtaButton } from "./CtaButton";
 
 /**
- * Logotipo y un botón (el botón solo desde md: en móvil ya está el botón fijo de abajo y la barra lleva solo el logo,
- * a la izquierda y algo más baja). Sin menú ni enlaces de salida.
+ * Solo el logotipo, a la izquierda (sin botón: en la página ya están los botones de cada bloque y, en móvil, el fijo
+ * de abajo). Sin menú ni enlaces de salida.
  *
  * La barra es fija en escritorio y en móvil, por encima de todo el contenido y de las escenas del grafo
  * y por debajo del aviso de cookies. En lo alto de la página no tiene fondo; al pasar contenido por
@@ -26,13 +25,10 @@ export function TopBar() {
 
   return (
     <header className="topbar fixed inset-x-0 top-0 z-[40]" data-scrolled={scrolled ? "" : undefined}>
-      <div className={`mx-auto flex max-w-[1280px] items-center justify-between px-5 transition-[height] duration-300 lg:px-10 ${scrolled ? "h-12 md:h-14" : "h-14 md:h-16"}`}>
+      <div className={`mx-auto flex max-w-[1280px] items-center px-5 transition-[height] duration-300 lg:px-10 ${scrolled ? "h-12" : "h-14"}`}>
         {/* Logotipo oficial de fivo.ai (versión blanca del encabezado), sin redibujar */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/logos/fivo-wordmark-white.svg" alt="Fivo" width={103} height={33} className="h-[30px] w-auto" />
-        <div className="max-md:hidden">
-          <CtaButton position="barra" size="sm" topbar />
-        </div>
       </div>
     </header>
   );
@@ -40,5 +36,5 @@ export function TopBar() {
 
 /** Hueco de la altura de la barra (que es fija), para que el contenido empiece debajo. */
 export function TopBarSpacer() {
-  return <div aria-hidden className="h-14 md:h-16" />;
+  return <div aria-hidden className="h-14" />;
 }

@@ -130,10 +130,10 @@ export function HowItWorks() {
   return (
     <section ref={section} aria-labelledby="como-funciona" className="relative overflow-x-clip border-t border-line">
       {/* Escritorio con movimiento: escenario fijo, el scroll es la línea de tiempo. CSS elige esta disposición o la apilada, así el HTML no cambia al cargar el JS */}
-      <div className="hidden lg:block lg:pt-20 motion-reduce:lg:hidden">
+      <div className="hidden lg:block lg:pt-20 motion-reduce:lg:hidden" style={{ "--h": "max(min(72dvh, 640px), 36rem)" } as React.CSSProperties}>
         {/* El recorrido mide justo lo que dura la animación: la escena (alto --h) más 130dvh de scroll. Al acabar el paso 3
             la escena termina en el borde inferior del recorrido y el bloque del botón aparece enseguida, sin pantalla vacía. */}
-        <div ref={track} data-how-track style={{ "--h": "max(min(72dvh, 640px), 36rem)", height: "calc(var(--h) + 130dvh)" } as React.CSSProperties}>
+        <div ref={track} data-how-track style={{ height: "calc(var(--h) + 130dvh)" }}>
           <div
             ref={stick}
             className="sticky mx-auto grid w-full max-w-[1280px] grid-cols-12 items-center gap-10 px-10"
@@ -181,12 +181,15 @@ export function HowItWorks() {
               </div>
           </div>
         </div>
-        <BlockCta position="como-funciona" className="mx-auto max-w-[1280px] px-10 pb-8 pt-12" />
+        {/* Pegado al final de la animación. Bajo el chat del paso 3 el escenario deja un aire que crece con su alto (--h):
+            el bloque sube lo que sobra de ese aire (nunca baja), para quedar a unos 56 px del chat, como el resto de
+            bloques. Abajo, sin padding propio */}
+        <BlockCta position="como-funciona" className="mx-auto mt-[min(0px,calc(223px-0.48*var(--h)))] max-w-[1280px] px-10" />
       </div>
 
       {/* Móvil, tableta y movimiento reducido: cada paso con su escena */}
       <div className="block lg:hidden motion-reduce:lg:block">
-        <div className="mx-auto max-w-[1120px] px-5 pb-5 pt-12 lg:px-10 lg:pb-8 lg:pt-20">
+        <div className="mx-auto max-w-[1120px] px-5 pb-0 pt-12 lg:px-10 lg:pb-8 lg:pt-20">
           <h2 className="font-display text-3xl font-black tracking-[-0.015em] sm:text-4xl">Cómo funciona</h2>
           <div className="mt-8 space-y-10">
             {STEPS.map((s, k) => (
@@ -224,7 +227,7 @@ export function HowItWorks() {
               </article>
             ))}
           </div>
-          <BlockCta position="como-funciona" />
+          <BlockCta position="como-funciona" className="mt-8 lg:mt-14" />
         </div>
       </div>
     </section>

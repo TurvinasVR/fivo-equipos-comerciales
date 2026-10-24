@@ -628,7 +628,7 @@ html[data-brand-icons] .icon-brand { fill: url(#fivo-grad); }
 
 /* Opiniones (Reviews): cinta que avanza hacia la izquierda en bucle. La pista lleva la lista dos veces; desplazarla media
    pista (una lista) deja todo igual que al principio, así que el reinicio no se nota. Duración por ancho para que cada
-   tarjeta tarde unos 9 s en cruzar la cinta (móvil 300 px, sm 320 px, lg 340 px por tarjeta, 12 tarjetas). */
+   tarjeta tarde unos 19 s en cruzar la cinta (móvil 300 px, sm 320 px, lg 340 px por tarjeta, 12 tarjetas). */
 @keyframes reviews-marquee {
   from { transform: translate3d(0, 0, 0); }
   to { transform: translate3d(-50%, 0, 0); }
@@ -639,14 +639,14 @@ html[data-brand-icons] .icon-brand { fill: url(#fivo-grad); }
   -webkit-touch-callout: none;
 }
 .reviews-track {
-  animation: reviews-marquee 90s linear infinite;
+  animation: reviews-marquee 210s linear infinite;
   will-change: transform;
 }
 @media (min-width: 640px) {
-  .reviews-track { animation-duration: 56s; }
+  .reviews-track { animation-duration: 130s; }
 }
 @media (min-width: 1024px) {
-  .reviews-track { animation-duration: 40s; }
+  .reviews-track { animation-duration: 80s; }
 }
 .reviews-marquee[data-held] .reviews-track {
   animation-play-state: paused;

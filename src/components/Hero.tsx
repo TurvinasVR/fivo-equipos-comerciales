@@ -13,7 +13,7 @@ export function Hero({ content }: { content: LandingContent }) {
   return (
     <section aria-labelledby="titular" className="relative overflow-hidden">
       <div className="mx-auto flex max-w-[1120px] flex-col items-center px-5 pb-5 pt-1 text-center sm:pt-3 lg:pb-8">
-        <p className="rounded-[6px] border border-line bg-surface px-3 py-1 text-[12px] font-medium text-fg-muted sm:text-[13px]">
+        <p className="whitespace-nowrap rounded-[6px] border border-line bg-surface px-2.5 py-0.5 text-[12px] font-medium leading-[1.45] text-fg-muted sm:px-3 sm:py-1 sm:text-[13px] sm:leading-normal">
           {rich(hero.label)}
         </p>
 
