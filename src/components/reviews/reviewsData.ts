@@ -5,7 +5,7 @@ export const REVIEWS: Review[] = [
   {
     "name": "Javier Martínez",
     "place": "España",
-    "sector": "Equipos comerciales",
+    "sector": "Equipo comercial",
     "text": "Fivo nos ayuda a tener una visión mucho más clara de lo que ocurre en nuestro equipo comercial. Tener las conversaciones y los datos organizados en un mismo sitio facilita muchísimo el seguimiento.",
     "stars": 5
   },
@@ -19,7 +19,7 @@ export const REVIEWS: Review[] = [
   {
     "name": "Alejandro Ruiz",
     "place": "España",
-    "sector": "Empresas tecnológicas",
+    "sector": "Empresa tecnológica",
     "text": "La idea del grafo de memoria es especialmente interesante. Poder relacionar tareas, conversaciones y documentos permite entender mejor el contexto de lo que sucede en la empresa.",
     "stars": 5
   },
@@ -62,7 +62,7 @@ export const REVIEWS: Review[] = [
   {
     "name": "Emily Johnson",
     "place": "Estados Unidos",
-    "sector": "Equipos comerciales",
+    "sector": "Equipo comercial",
     "text": "La combinación de resúmenes de reuniones, herramientas de trabajo conectadas y conocimiento de empresa consultable es convincente. Podría ayudar a los responsables comerciales a identificar patrones y a entrenar mejor a sus equipos.",
     "stars": 5,
     "translated": true
