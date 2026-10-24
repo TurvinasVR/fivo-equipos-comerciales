@@ -11,14 +11,16 @@ type LandingRuntime = {
   video: {
     /** URL del vídeo (mp4/webm). Vacío = vídeo de sustitución. */
     src: string;
+    /** Versión ligera para móvil (ver MOBILE_VIDEO_MEDIA en VideoPlayer). Vacío = la misma que src. */
+    mobileSrc: string;
     /** Miniatura. Vacío = miniatura de sustitución. */
     poster: string;
-    /** Subtítulos WebVTT en español. Vacío = subtítulos de sustitución. */
+    /** Subtítulos WebVTT en español. Vacío = sin subtítulos (el VSL real aún no tiene .vtt). */
     captions: string;
     /**
      * Segundo del vídeo en el que empieza la llamada a la acción. Al llegar a él
      * la reproducción dispara video_cta_reached (una sola vez). null = no se envía.
-     * Valor provisional para el vídeo de sustitución de 20 s: poner el real.
+     * Pendiente del segundo real del VSL: mientras no llegue, null.
      */
     ctaSecond: number | null;
   };
@@ -45,15 +47,24 @@ const env = {
   metaPixel: process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim() || "",
 };
 
-/** Vídeo, miniatura y subtítulos de cada landing: URLs externas (nada de vídeo en el repositorio). */
+/**
+ * VSL oficial (vsl-01), comprimido desde el original con x264 (high, yuv420p, AAC 128k, faststart) en public/video:
+ * escritorio 1080p CRF 26 (56 MB) y móvil 720p CRF 29 (19 MB). Póster en public/img.
+ * Las variables NEXT_PUBLIC_VIDEO_* siguen mandando si se rellenan (p. ej. para servirlo desde fuera); con una URL
+ * propia no se usa la versión móvil local, que sería de otro vídeo.
+ */
+const VSL = { src: "/video/vsl-01.mp4", mobileSrc: "/video/vsl-01-720.mp4", poster: "/img/vsl-01-poster.webp" };
+
+/** Vídeo, miniatura y subtítulos de cada landing. */
 const landingRuntime = (): LandingRuntime => ({
   video: {
-    src: env.videoUrl,
-    poster: env.videoPoster,
+    src: env.videoUrl || VSL.src,
+    mobileSrc: env.videoUrl ? "" : VSL.mobileSrc,
+    poster: env.videoPoster || VSL.poster,
     captions: env.videoCaptions,
-    ctaSecond: env.videoCtaSecond === "" ? 10 : env.videoCtaSecond === "none" ? null : Number(env.videoCtaSecond) || 10,
+    ctaSecond: env.videoCtaSecond === "" || env.videoCtaSecond === "none" ? null : Number(env.videoCtaSecond) || null,
   },
-  ready: { video: Boolean(env.videoUrl), testimonials: false },
+  ready: { video: true, testimonials: false },
 });
 
 export const siteConfig = {

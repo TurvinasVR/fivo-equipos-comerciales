@@ -9,8 +9,13 @@ import { track, trackOnce } from "@/lib/analytics";
 import { CtaButton } from "./CtaButton";
 import { CtaHint } from "./CtaBlock";
 
+/** Pantallas que reciben la versión ligera del vídeo: móviles en vertical y en horizontal. */
+const MOBILE_VIDEO_MEDIA = "(max-width: 767px), (max-height: 500px)";
+
 type Props = {
   src: string;
+  /** Versión ligera para móvil. Se elige una sola vez, al asignar el vídeo, según MOBILE_VIDEO_MEDIA. */
+  mobileSrc?: string;
   poster: string;
   captions: string;
   /** Empieza solo y en silencio (VSL de la primera pantalla). */
@@ -27,6 +32,7 @@ type Props = {
 
 export function VideoPlayer({
   src,
+  mobileSrc,
   poster,
   captions,
   autoplayMuted = false,
@@ -37,7 +43,13 @@ export function VideoPlayer({
   className = "",
 }: Props) {
   const ref = useRef<HTMLVideoElement>(null);
-  const [armed, setArmed] = useState(false); // src asignado (carga diferida)
+  // src asignado (carga diferida). La versión se fija al asignarlo: girar o redimensionar no recarga el vídeo.
+  const [armedSrc, setArmedSrc] = useState<string | null>(null);
+  const armed = armedSrc !== null;
+  const setArmed = useCallback(
+    () => setArmedSrc((cur) => cur ?? (mobileSrc && window.matchMedia(MOBILE_VIDEO_MEDIA).matches ? mobileSrc : src)),
+    [src, mobileSrc],
+  );
   const [playing, setPlaying] = useState(false);
   const [started, setStarted] = useState(false);
   const [framed, setFramed] = useState(false); // ya hay un fotograma de vídeo: el póster se retira
@@ -49,7 +61,7 @@ export function VideoPlayer({
 
   // Carga diferida: el vídeo no se pide hasta que la página ha terminado de cargar.
   useEffect(() => {
-    const arm = () => setArmed(true);
+    const arm = () => setArmed();
     const idle = (cb: () => void) => {
       if (typeof window.requestIdleCallback === "function") window.requestIdleCallback(cb, { timeout: 2500 });
       else setTimeout(cb, 1500);
@@ -58,7 +70,7 @@ export function VideoPlayer({
     if (document.readyState === "complete") go();
     else window.addEventListener("load", go, { once: true });
     return () => window.removeEventListener("load", go);
-  }, []);
+  }, [setArmed]);
 
   // Autoplay en silencio, salvo con movimiento reducido o ahorro de datos.
   useEffect(() => {
@@ -91,10 +103,10 @@ export function VideoPlayer({
   const toggleMain = () => {
     const v = ref.current;
     if (!v) {
-      setArmed(true);
+      setArmed();
       return;
     }
-    if (!armed) setArmed(true);
+    if (!armed) setArmed();
     // Primer toque con sonido apagado: se activa el sonido y sigue reproduciendo.
     if (playing && v.muted) {
       v.muted = false;
@@ -160,8 +172,8 @@ export function VideoPlayer({
       <video
         ref={ref}
         className="absolute inset-0 h-full w-full object-cover"
-        src={armed ? src : undefined}
-        preload="none"
+        src={armedSrc ?? undefined}
+        preload="metadata"
         muted
         playsInline
         aria-label={label}
@@ -292,8 +304,9 @@ export function MainVsl({ slug, label, endCta }: { slug: LandingSlug; label: str
   return (
     <VideoPlayer
       src={video.src || "/video/placeholder.mp4"}
+      mobileSrc={video.mobileSrc || undefined}
       poster={video.poster || "/img/video-poster.webp"}
-      captions={video.captions || "/video/placeholder-es.vtt"}
+      captions={video.captions}
       autoplayMuted
       trackEvents
       ctaSecond={video.ctaSecond}
