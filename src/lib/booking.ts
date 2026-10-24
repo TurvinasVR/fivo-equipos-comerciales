@@ -99,6 +99,19 @@ export function captureMeetzParams(): void {
   }
 }
 
+/**
+ * El id de la reserva solo si viene en la URL (la redirección de meetz al terminar la reserva), sin mirar lo guardado en
+ * la sesión: así el evento Schedule del píxel no sale al volver a /gracias navegando dentro de la web.
+ */
+export function reservaIdFromUrl(): string | null {
+  try {
+    const q = new URLSearchParams(window.location.search);
+    return RESERVA_PARAMS.map((k) => q.get(k)?.trim()).find(Boolean)?.slice(0, 100) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /** El id de la reserva (r, booking_id, bookingId o id), guardado mientras dure la visita. */
 export function readReservaId(): string | null {
   try {

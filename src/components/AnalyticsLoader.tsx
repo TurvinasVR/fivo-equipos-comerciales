@@ -25,7 +25,11 @@ function loadScript(src: string) {
   document.head.appendChild(s);
 }
 
-/** Carga GA4 y Meta Pixel solo después de aceptar cookies (RGPD). */
+/**
+ * Carga GA4 y Meta Pixel solo después de aceptar cookies (RGPD): antes no hay ninguna petición a Google ni a Meta.
+ * Si se acepta más tarde, se cargan en ese momento y el píxel envía el PageView de la página actual. Si se rechaza o se
+ * retira, no se cargan (o se revocan con consent revoke). Sin la imagen <noscript> del píxel, que saltaría el consentimiento.
+ */
 export function AnalyticsLoader() {
   const consent = useConsent();
 
@@ -53,6 +57,9 @@ export function AnalyticsLoader() {
       window.gtag("config", ga4Id, { anonymize_ip: true });
       loadScript(`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(ga4Id)}`);
     }
+
+    // Se había retirado el consentimiento y se vuelve a dar: el píxel ya cargado sigue enviando
+    if (metaPixelId && window.fbq) window.fbq("consent", "grant");
 
     if (metaPixelId && !window.fbq) {
       // Misma estructura que el snippet oficial: fbevents.js recoge la cola al cargar.

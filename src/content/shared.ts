@@ -13,8 +13,3 @@ export const FAQ_TRANSCRIBE: FaqItem = {
   q: "¿Es una herramienta para transcribir llamadas?",
   a: "No. Las llamadas son una de las fuentes. Fivo construye un grafo de contexto con lo que hace tu equipo en sus herramientas y lo conecta a tu IA.",
 };
-
-export const FAQ_PRICE: FaqItem = {
-  q: "¿Cuánto cuesta?",
-  a: "Se paga por licencia y mes: Pro cuesta **29,99 €**, Business **39,99 €** y Enterprise es a medida. También existe un plan Free.",
-};

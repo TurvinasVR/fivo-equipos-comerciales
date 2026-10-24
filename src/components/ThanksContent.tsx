@@ -4,7 +4,8 @@ import { useLayoutEffect, useState } from "react";
 import { CheckCircle } from "@phosphor-icons/react";
 import { siteConfig } from "@/config/site";
 import type { LandingContent } from "@/content/types";
-import { captureMeetzParams, readBooking, readReservaId, type BookingInfo } from "@/lib/booking";
+import { captureMeetzParams, readBooking, readReservaId, reservaIdFromUrl, type BookingInfo } from "@/lib/booking";
+import { trackSchedule } from "@/lib/analytics";
 import { CalendarAdd } from "./CalendarAdd";
 import { TestimonialCard } from "./Testimonial";
 import { CalculatorSection } from "./calculator/CalculatorSection";
@@ -27,6 +28,9 @@ export function ThanksContent({ content }: { content: LandingContent }) {
   useLayoutEffect(() => {
     captureMeetzParams();
     readReservaId();
+    // Píxel de Meta: Schedule cuando se llega desde meetz con el id de la reserva (una vez por reserva)
+    const reserva = reservaIdFromUrl();
+    if (reserva) trackSchedule(reserva);
     const b = readBooking();
     document.documentElement.toggleAttribute("data-booking", Boolean(b));
     // eslint-disable-next-line react-hooks/set-state-in-effect

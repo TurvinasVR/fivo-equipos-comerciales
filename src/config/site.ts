@@ -88,7 +88,8 @@ export const siteConfig = {
 
   analytics: {
     ga4Id: env.ga4, // p. ej. G-XXXXXXXXXX
-    metaPixelId: env.metaPixel,
+    // Meta Pixel de Fivo. Solo se carga tras aceptar las cookies (AnalyticsLoader). NEXT_PUBLIC_META_PIXEL_ID lo sustituye
+    metaPixelId: env.metaPixel || "588907180983000",
   },
 
   legal: {

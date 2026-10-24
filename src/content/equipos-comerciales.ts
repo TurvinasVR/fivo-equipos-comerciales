@@ -1,4 +1,4 @@
-import { SCALE, FAQ_PRICE, FAQ_TRANSCRIBE } from "./shared";
+import { SCALE, FAQ_TRANSCRIBE } from "./shared";
 import type { LandingContent, TestimonialData } from "./types";
 
 const placeholder: TestimonialData = {
@@ -59,7 +59,18 @@ export const equiposComerciales: LandingContent = {
           { f: "teams.svg", dx: 6, dy: 34 },
         ],
       },
-      { id: "crm", label: "CRM", cx: 0.76, cy: 0.24, ring: [86, 86], labelTop: 54, nodes: [{ f: "hubspot.svg", dx: 0, dy: 0 }] },
+      {
+        id: "crm",
+        label: "CRM",
+        cx: 0.76,
+        cy: 0.24,
+        ring: [150, 96],
+        labelTop: 58,
+        nodes: [
+          { f: "hubspot.svg", dx: -30, dy: 0 },
+          { f: "gohighlevel.svg", dx: 30, dy: 0 },
+        ],
+      },
       {
         id: "docs",
         label: "Mensajes y documentos",
@@ -231,7 +242,6 @@ export const equiposComerciales: LandingContent = {
         q: "¿Cuánto tarda en estar funcionando?",
         a: "",
       },
-      FAQ_PRICE,
     ],
   },
 
