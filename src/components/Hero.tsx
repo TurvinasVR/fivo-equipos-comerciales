@@ -1,6 +1,7 @@
 import type { LandingContent } from "@/content/types";
 import { rich } from "@/lib/rich";
 import { ClientLogos } from "./ClientLogos";
+import { ClientProfiles } from "./ClientProfiles";
 import { CtaBlock } from "./CtaBlock";
 import { MainVsl } from "./VideoPlayer";
 
@@ -51,6 +52,11 @@ export function Hero({ content }: { content: LandingContent }) {
         <div className="mt-3 w-full lg:mt-3">
           <p className="mb-2 text-center text-[12px] font-medium text-fg-muted">Clientes de Fivo</p>
           <ClientLogos />
+        </div>
+
+        {/* Perfiles de Instagram de clientes (solo en la home: este hero no se usa en /gracias) */}
+        <div className="mt-4 w-full lg:mt-4">
+          <ClientProfiles />
         </div>
 
         <div className="mt-4 w-full sm:w-auto lg:mt-4">
