@@ -615,3 +615,45 @@ html[data-brand-icons] .icon-brand { fill: url(#fivo-grad); }
   .profiles-marquee::-webkit-scrollbar { display: none; }
   .profiles-track { animation: none; }
 }
+
+/* Opiniones (Reviews): cinta que avanza hacia la izquierda en bucle. La pista lleva la lista dos veces; desplazarla media
+   pista (una lista) deja todo igual que al principio, así que el reinicio no se nota. Duración por ancho para que cada
+   tarjeta tarde unos 9 s en cruzar la cinta (móvil 300 px, sm 320 px, lg 340 px por tarjeta, 12 tarjetas). */
+@keyframes reviews-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+.reviews-marquee {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+  -webkit-touch-callout: none;
+}
+.reviews-track {
+  animation: reviews-marquee 90s linear infinite;
+  will-change: transform;
+}
+@media (min-width: 640px) {
+  .reviews-track { animation-duration: 56s; }
+}
+@media (min-width: 1024px) {
+  .reviews-track { animation-duration: 40s; }
+}
+.reviews-marquee[data-held] .reviews-track {
+  animation-play-state: paused;
+}
+/* Con ratón: pausa al pasar por encima (en pantallas táctiles :hover se queda pegado tras tocar, por eso solo aquí) */
+@media (hover: hover) and (pointer: fine) {
+  .reviews-marquee:hover .reviews-track { animation-play-state: paused; }
+}
+/* Movimiento reducido: sin animación, una fila que se desliza con el dedo o el trackpad */
+@media (prefers-reduced-motion: reduce) {
+  .reviews-marquee {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .reviews-marquee::-webkit-scrollbar { display: none; }
+  .reviews-track { animation: none; }
+}
