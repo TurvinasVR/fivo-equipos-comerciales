@@ -26,6 +26,13 @@ export type Layout = {
   compact: boolean;
   RX: number;
   RY: number;
+  /**
+   * Óvalo apaisado (tableta y escritorio): el anillo gira 90° más medio paso, así las etiquetas largas quedan arriba y
+   * abajo (donde los vecinos están lado a lado) y en cada lado hay una pareja simétrica de etiquetas cortas.
+   */
+  turn: boolean;
+  /** Amplitud del giro suave del grafo (radianes). */
+  sway: number;
   center: Pose;
   corner: Pose;
   right: Pose;
@@ -38,8 +45,14 @@ export function makeLayout(W: number, H: number): Layout {
   const compact = W < 560;
   if (compact) {
     const unit = Math.min(W / 9, H / 10.2);
+    // Óvalo que aprovecha el escenario sin salirse: en vertical deja sitio al icono y a su etiqueta (1,6 unidades) y en
+    // horizontal a media etiqueta larga (1,4). En móvil (escenario alto) sale un óvalo alto; en tableta (escenario
+    // apaisado y bajo) uno ancho, y entonces el anillo gira 90° (ver `turn`).
+    const RY = Math.min(5.7, (H / 2 / unit - 1.6) / 0.8);
+    const RX = Math.min(6.4, (W / 2 / unit - 1.4) / 0.86);
+    const turn = RX * 0.86 > RY * 0.8;
     return {
-      W, H, unit, compact, RX: 3.9, RY: 4.7,
+      W, H, unit, compact, RX, RY, turn, sway: 0.3,
       center: { x: 0, y: 0.2, s: 1 },
       corner: { x: 0, y: 4.55, s: 0.3 },
       right: { x: 0, y: 4.6, s: 0.32 },
@@ -49,7 +62,8 @@ export function makeLayout(W: number, H: number): Layout {
   }
   const unit = Math.min(W / 8.8, H / 6.4);
   return {
-    W, H, unit, compact, RX: 3.15, RY: 2.3,
+    // Óvalo apaisado: el anillo gira 90° como en tableta, con las etiquetas largas arriba y abajo
+    W, H, unit, compact, RX: 3.15, RY: 2.3, turn: true, sway: 0.42,
     center: { x: 0, y: 0, s: 1 },
     corner: { x: 2.35, y: 1.75, s: 0.4 },
     right: { x: 2.2, y: 0, s: 0.68 },
@@ -153,7 +167,7 @@ export function computeState(tRaw: number, tm: number, L: Layout, forceStatic = 
   const toCorner = { x: mix(L.center.x, L.corner.x, k1), y: mix(L.center.y, L.corner.y, k1), s: mix(L.center.s, L.corner.s, k1) };
   const g = { x: mix(toCorner.x, L.right.x, k2), y: mix(toCorner.y, L.right.y, k2), s: mix(toCorner.s, L.right.s, k2) };
   const g0 = { s: g.s };
-  const yaw = Math.sin(tm * 0.18 + t * 0.8) * 0.42;
+  const yaw = Math.sin(tm * 0.18 + t * 0.8) * L.sway;
   const cy = Math.cos(yaw);
   const sy = Math.sin(yaw);
   const tilt = 0.16;
@@ -172,13 +186,21 @@ export function computeState(tRaw: number, tm: number, L: Layout, forceStatic = 
   };
 
   const nodes: NodeState[] = [];
+  const turnA = ((90 + 180 / tools.length) * Math.PI) / 180;
+  const turnCos = Math.cos(turnA);
+  const turnSin = Math.sin(turnA);
 
   // Herramientas: dispersas, se enganchan una a una
   tools.forEach((n, i) => {
     const a = 0.04 + i * 0.088;
     const w = clamp01((t - a) / 0.16);
     const move = easeOut(clamp01(w / 0.5));
-    const ring = { x: n.u * L.RX, y: n.v * L.RY, z: n.z };
+    // Con `turn`, el ángulo de cada nodo en el anillo avanza 90° más medio paso, sin cambiar el orden
+    const ca = n.u / 0.86;
+    const sa = n.v / 0.8;
+    const ring = L.turn
+      ? { x: (ca * turnCos - sa * turnSin) * 0.86 * L.RX, y: (sa * turnCos + ca * turnSin) * 0.8 * L.RY, z: n.z }
+      : { x: n.u * L.RX, y: n.v * L.RY, z: n.z };
     const sc = scatter[i];
     const drift = Math.sin(tm * 0.5 + i * 1.7) * 0.1;
     const sx0 = sc.x * L.RX * 1.15 + drift;
