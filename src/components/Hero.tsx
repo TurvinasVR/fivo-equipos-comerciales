@@ -1,6 +1,5 @@
 import type { LandingContent } from "@/content/types";
 import { rich } from "@/lib/rich";
-import { ClientLogos } from "./ClientLogos";
 import { ClientProfiles } from "./ClientProfiles";
 import { CtaBlock } from "./CtaBlock";
 import { MainVsl } from "./VideoPlayer";
@@ -48,14 +47,8 @@ export function Hero({ content }: { content: LandingContent }) {
           <MainVsl slug={slug} label={hero.videoLabel} endCta={hero.videoEnd} />
         </div>
 
-        {/* Prueba social discreta bajo el vídeo: etiqueta pequeña y una fila de logotipos, sin caja */}
-        <div className="mt-3 w-full lg:mt-3">
-          <p className="mb-2 text-center text-[12px] font-medium text-fg-muted">Clientes de Fivo</p>
-          <ClientLogos />
-        </div>
-
-        {/* Perfiles de Instagram de clientes (solo en la home: este hero no se usa en /gracias) */}
-        <div className="mt-4 w-full lg:mt-4">
+        {/* Prueba social bajo el vídeo: perfiles de Instagram de clientes (solo en la home: este hero no se usa en /gracias) */}
+        <div className="mt-4 w-full lg:mt-5">
           <ClientProfiles />
         </div>
 
