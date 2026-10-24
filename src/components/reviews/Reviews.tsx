@@ -66,31 +66,31 @@ export default function Reviews({ headingLevel = 3, className = "mt-14 lg:mt-20"
         aria-roledescription="carrusel"
         aria-label="Opiniones sobre Fivo"
         tabIndex={0}
-        className="mt-5 grid auto-cols-[85%] grid-flow-col grid-rows-[auto_auto_auto] gap-x-4 snap-x snap-mandatory overflow-x-auto overscroll-x-contain rounded-xl [scrollbar-width:none] sm:mt-6 sm:auto-cols-[calc((100%-16px)/2)] lg:auto-cols-[calc((100%-32px)/3)] [&::-webkit-scrollbar]:hidden"
+        className="mt-5 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain rounded-xl [scrollbar-width:none] sm:mt-6 [&::-webkit-scrollbar]:hidden"
       >
-        {/* Las tarjetas comparten las filas del carrusel (subgrid): estrellas, texto y firma. Todas miden lo que la más alta,
-            también las que están fuera de la vista (no cambian al desplazarse), y el nombre empieza a la misma altura en
-            todas, a 20/24 px del texto más largo */}
+        {/* Todas las tarjetas miden lo que la más alta del carrusel (también las que están fuera de la vista: no cambian al
+            desplazarse). El nombre va justo tras el texto, siempre a la misma distancia; lo que sobre queda bajo el sector.
+            "Traducido del inglés" va en la fila de las estrellas para no alargar el texto */}
         {REVIEWS.map((r, i) => (
           <figure
             key={r.name}
             role="group"
             aria-roledescription="diapositiva"
             aria-label={`${i + 1} de ${REVIEWS.length}`}
-            className="row-span-3 grid snap-start grid-rows-subgrid rounded-xl border border-line bg-surface p-5 sm:p-6"
+            className="flex shrink-0 basis-[88%] snap-start flex-col rounded-xl border border-line bg-surface p-4 sm:basis-[calc((100%-16px)/2)] sm:p-6 lg:basis-[calc((100%-32px)/3)] lg:px-5"
           >
-            <div className="flex gap-0.5" role="img" aria-label={`${r.stars} estrellas`}>
-              {Array.from({ length: r.stars }, (_, k) => (
-                <Star key={k} size={16} weight="fill" className="icon-brand" aria-hidden />
-              ))}
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex gap-0.5" role="img" aria-label={`${r.stars} estrellas`}>
+                {Array.from({ length: r.stars }, (_, k) => (
+                  <Star key={k} size={16} weight="fill" className="icon-brand" aria-hidden />
+                ))}
+              </div>
+              {r.translated && <span className="text-[13px] text-fg-muted">Traducido del inglés</span>}
             </div>
-            <div className="mt-3 flex flex-col sm:mt-4">
-              <blockquote className="text-[15px] leading-[1.6] text-fg">{r.text}</blockquote>
-              {r.translated && <span className="mt-2 text-[13px] text-fg-muted">Traducido del inglés</span>}
-            </div>
-            <figcaption className="pt-5 sm:pt-6">
+            <blockquote className="mt-3 text-[15px] leading-[1.5] text-fg sm:mt-4 sm:leading-[1.55]">{r.text}</blockquote>
+            <figcaption className="mt-4 sm:mt-5">
               <span className="block font-semibold text-fg">{r.name}</span>
-              <span className="block text-[14px] text-fg-muted">{[r.place, r.sector].join(" · ")}</span>
+              <span className="block text-[13px] leading-snug text-fg-muted sm:text-[14px]">{[r.place, r.sector].join(" · ")}</span>
             </figcaption>
           </figure>
         ))}
