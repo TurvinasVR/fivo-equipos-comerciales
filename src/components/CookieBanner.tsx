@@ -35,7 +35,7 @@ export function CookieBanner() {
     >
       <div className="card border-line-strong bg-surface-2 p-4 sm:p-5">
         <p className="text-sm text-fg-muted">
-          Usamos cookies de analítica para medir esta página. No las cargamos hasta que aceptes.{" "}
+          Usamos cookies de analítica y de publicidad (Meta) para medir esta página y nuestros anuncios. No las cargamos hasta que aceptes.{" "}
           <a href={siteConfig.legal.cookies} target="_blank" rel="noopener" className="text-accent underline">
             Más información
           </a>
