@@ -82,7 +82,8 @@ function Graph({ view, stateRef, N }: { view: SceneView; stateRef: MutableRefObj
     cam.position.set(0, 0, D);
     cam.updateProjectionMatrix();
 
-    const gs = st.hub.s;
+    // El nodo de Fivo entra al empezar el paso 1
+    const gs = st.hub.s * Math.max(0.001, st.hubIn);
     const hx = st.hub.X;
     const hy = st.hub.Y;
     o.hubCore.position.set(hx, hy, 0);
@@ -99,6 +100,14 @@ function Graph({ view, stateRef, N }: { view: SceneView; stateRef: MutableRefObj
     for (let i = 0; i < N; i++) {
       const n = st.nodes[i];
       const isCall = n.kind === "call";
+      // Las herramientas y sus conexiones son de la red del paso 1, que va en SVG por encima (HowStage)
+      if (!isCall) {
+        o.lines[i].visible = false;
+        o.halos[i].visible = false;
+        o.cores[i].visible = false;
+        o.pulses[i].visible = false;
+        continue;
+      }
       const pos = o.lines[i].geometry.attributes.position as THREE.BufferAttribute;
       pos.setXYZ(0, hx, hy, 0);
       pos.setXYZ(1, lerp(hx, n.X, n.lineP), lerp(hy, n.Y, n.lineP), lerp(0, n.Z, n.lineP));

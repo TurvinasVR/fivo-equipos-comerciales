@@ -2,10 +2,24 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useRef, useState, useSyncExternalStore } from "react";
-import { STATIC_T } from "@/lib/scene/how/model";
+import { HUB_PRE, STATIC_T } from "@/lib/scene/how/model";
 import type { HowState } from "@/lib/scene/how/model";
 import { clamp01 } from "@/lib/scene/motion";
 import { PHONE_QUERY, useEarly } from "@/lib/hooks";
+
+/**
+ * Progreso de un escenario que se queda fijo dentro de su recorrido: de 0 a 1 mientras está fijo. Antes, mientras sube
+ * hasta su sitio, va de -HUB_PRE a 0 (entra el nodo de Fivo), así nunca se ve un escenario vacío.
+ */
+function pinProgress(trackEl: HTMLElement, stickEl: HTMLElement) {
+  const r = trackEl.getBoundingClientRect();
+  const top = parseFloat(getComputedStyle(stickEl).top) || 0;
+  if (r.top > top) {
+    const vh = window.innerHeight;
+    return -HUB_PRE * (1 - clamp01((vh - r.top) / Math.max(1, vh - top)));
+  }
+  return clamp01((top - r.top) / Math.max(1, r.height - stickEl.offsetHeight));
+}
 import { useScene } from "@/lib/scene/store";
 import { useLanding } from "./landing/LandingContext";
 import { BlockCta } from "./landing/BlockCta";
@@ -82,11 +96,9 @@ export function HowItWorks() {
     if (!el) return 0;
     const st = stick.current;
     if (!st) return 0;
-    const r = el.getBoundingClientRect();
     // La escena se queda fija cuando el recorrido llega a su `top` y se suelta cuando su borde inferior toca el del recorrido
-    const top = parseFloat(getComputedStyle(st).top) || 0;
-    const total = r.height - st.offsetHeight;
-    return clamp01((top - r.top) / Math.max(1, total)) * 3;
+    const k = pinProgress(el, st);
+    return k < 0 ? k : k * 3;
   }, []);
 
   const onFrame = useCallback((s: HowState) => {
@@ -99,20 +111,12 @@ export function HowItWorks() {
 
   /* ---------- móvil y estático: cada paso con su escena */
   const stepEls = useRef<(HTMLElement | null)[]>([]);
-  const graphStage = useRef<HTMLDivElement | null>(null);
+  const pinTrack = useRef<HTMLDivElement | null>(null);
+  const pinStick = useRef<HTMLDivElement | null>(null);
   const getTStep = (k: number) => () => {
     const vh = window.innerHeight;
-    // Móvil, paso 1: el grafo es casi tan alto como la pantalla, así que se mide por el propio escenario. Los nodos empiezan
-    // a conectarse cuando asoma por abajo y terminan cuando queda centrado entre la barra superior y el botón fijo, con los
-    // 11 a la vista.
-    const g = graphStage.current;
-    if (k === 0 && g && window.matchMedia(PHONE_QUERY).matches) {
-      const r = g.getBoundingClientRect();
-      const barBottom = Math.max(0, document.querySelector(".topbar")?.getBoundingClientRect().bottom ?? 0);
-      const ctaTop = Math.min(vh, document.querySelector(".sticky-cta")?.getBoundingClientRect().top ?? vh);
-      const centeredTop = (barBottom + ctaTop - r.height) / 2;
-      return clamp01((vh - r.top) / Math.max(1, vh - centeredTop));
-    }
+    // Paso 1: su escenario se queda fijo mientras se forma la red (ver .how-pin)
+    if (k === 0 && pinTrack.current && pinStick.current) return pinProgress(pinTrack.current, pinStick.current);
     const el = stepEls.current[k];
     if (!el) return k;
     const r = el.getBoundingClientRect();
@@ -133,7 +137,7 @@ export function HowItWorks() {
             </div>
           </>
         ) : (
-          <HowPoster k={k} toolIds={tools.ids} scene={how.scene} />
+          <HowPoster k={k} toolIds={tools.ids} scene={how.scene} sticky />
         )}
       </div>
     </>
@@ -212,7 +216,7 @@ export function HowItWorks() {
                 }}
                 className="grid items-center gap-6 md:grid-cols-12 md:gap-10"
               >
-                <div className="flex gap-4 md:col-span-4">
+                <div className={`flex gap-4 ${k === 0 ? "md:col-span-12" : "md:col-span-4"}`}>
                   <StepHead n={k + 1} title={s.title} desc={s.desc} />
                 </div>
                 {k > 0 && (
@@ -220,25 +224,47 @@ export function HowItWorks() {
                     <HowPhoneCard k={k as 1 | 2} scene={how.scene} />
                   </div>
                 )}
-                {/* El paso 1 (el grafo de 11 herramientas) tiene un escenario más alto para que los nodos no se junten */}
-                <div
-                  ref={k === 0 ? graphStage : undefined}
-                  className={`relative w-full md:col-span-8 ${k === 0 ? "aspect-[3/5] max-[389px]:aspect-[3/5.5] md:aspect-square" : "aspect-[7/10] md:aspect-[4/3] max-md:hidden"}`}>
-                  {stage(`step${k}`, k as 0 | 1 | 2, true)}
-                  {early && !sticky && !(phone && k > 0) && (
-                    <div className="absolute inset-0" style={{ opacity: ready[`step${k}`] ? 1 : 0 }}>
-                      <HowStage
-                        toolIds={tools.ids}
-                        scene={how.scene}
-                        key={`${staticMode}-${k}`}
-                        getT={getTStep(k)}
-                        staticT={staticMode ? STATIC_T[k] : null}
-                        use3d={false}
-                        onFrame={() => markReady(`step${k}`)}
-                      />
+                {k === 0 ? (
+                  // Paso 1: la red de 11 herramientas. Escenario alto (en tableta, de todo el ancho) que se queda fijo
+                  // mientras la red se forma; el paso 2 llega cuando ya está completa
+                  <div ref={pinTrack} className="how-pin relative w-full md:col-span-12">
+                    <div ref={pinStick} className="how-pin__stick">
+                      <div className="relative h-full w-full">
+                        {stage("step0", 0, true)}
+                        {early && !sticky && (
+                          <div className="absolute inset-0" style={{ opacity: ready.step0 ? 1 : 0 }}>
+                            <HowStage
+                              toolIds={tools.ids}
+                              scene={how.scene}
+                              key={`${staticMode}-0`}
+                              getT={getTStep(0)}
+                              staticT={staticMode ? STATIC_T[0] : null}
+                              use3d={false}
+                              onFrame={() => markReady("step0")}
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div className="relative aspect-[7/10] w-full max-md:hidden md:col-span-8 md:aspect-[4/3]">
+                    {stage(`step${k}`, k as 0 | 1 | 2, true)}
+                    {early && !sticky && !phone && (
+                      <div className="absolute inset-0" style={{ opacity: ready[`step${k}`] ? 1 : 0 }}>
+                        <HowStage
+                          toolIds={tools.ids}
+                          scene={how.scene}
+                          key={`${staticMode}-${k}`}
+                          getT={getTStep(k)}
+                          staticT={staticMode ? STATIC_T[k] : null}
+                          use3d={false}
+                          onFrame={() => markReady(`step${k}`)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
               </article>
             ))}
           </div>

@@ -1,11 +1,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { toolsFor } from "@/lib/scene/graph";
 import type { ToolId } from "@/lib/scene/graph";
 import type { HowScene } from "@/content/types";
 import { bezier, computeState, makeLayout, SOURCES } from "@/lib/scene/how/model";
+import { buildNetwork, edgePoint, T as NT } from "@/lib/scene/how/network";
+import { EDGE_STYLE } from "./edgeStyle";
 import type { HowState } from "@/lib/scene/how/model";
 import { clamp01, easeOut, lerp } from "@/lib/scene/motion";
 
@@ -23,6 +25,9 @@ type Props = {
   use3d: boolean;
   onFrame?: (s: HowState) => void;
 };
+
+/** Halo oscuro detrás del texto: las líneas que pasan por debajo no lo tapan. */
+const LABEL_HALO = "0 0 3px var(--color-bg), 0 0 6px var(--color-bg), 0 0 10px var(--color-bg)";
 
 const dist = (el: HTMLElement | null, stage: HTMLElement) => {
   // Centro de `el` en coordenadas del escenario, sin leer transformaciones.
@@ -49,6 +54,9 @@ export default function HowStage({ toolIds, scene, getT, staticT, use3d, onFrame
   const stage = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ W: 720, H: 520 });
   const L = useMemo(() => makeLayout(size.W, size.H), [size]);
+  const NET = useMemo(() => buildNetwork(size.W, size.H, TOOLS), [size, TOOLS]);
+  // Ids propios de los degradados: en tableta hay tres escenarios en la página
+  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const stateRef = useRef<HowState>(computeState(0, 0, L, false, TOOLS));
   const layoutRef = useRef(L);
   layoutRef.current = L;
@@ -58,8 +66,18 @@ export default function HowStage({ toolIds, scene, getT, staticT, use3d, onFrame
     halos: [] as (SVGCircleElement | null)[],
     pulses: [] as (SVGCircleElement | null)[],
     cores: [] as (SVGCircleElement | null)[],
+    net: null as HTMLElement | null,
     chips: [] as (HTMLElement | null)[],
     labels: [] as (HTMLElement | null)[],
+    pills: [] as (HTMLElement | null)[],
+    caps: [] as (HTMLElement | null)[],
+    gHalos: [] as (SVGCircleElement | null)[],
+    edges: [] as (SVGPathElement | null)[],
+    netDots: [] as (SVGGElement | null)[],
+    netPulses: [] as (SVGGElement | null)[],
+    /** Último valor escrito en cada propiedad: solo se toca el DOM cuando cambia */
+    last: new Map<object, string>(),
+    minor: null as SVGGElement | null,
     hubGlow: null as SVGCircleElement | null,
     hubRing: null as SVGCircleElement | null,
     hubChip: null as HTMLElement | null,
@@ -132,8 +150,9 @@ export default function HowStage({ toolIds, scene, getT, staticT, use3d, onFrame
     const gs = st.hub.s;
     const stepOne = clamp01((gs - 0.8) / 0.2);
 
-    // Grafo en SVG (el 3D lo dibuja WebGL)
+    // Nodos de llamadas de los pasos 2 y 3 en SVG (el 3D lo dibuja WebGL). Las herramientas van en la red, más abajo
     st.nodes.forEach((n, i) => {
+      if (n.kind === "tool") return;
       const line = r.lines[i];
       if (line) {
         line.setAttribute("x1", st.hub.sx.toFixed(1));
@@ -166,32 +185,91 @@ export default function HowStage({ toolIds, scene, getT, staticT, use3d, onFrame
           pulse.setAttribute("cy", (st.hub.sy + (n.sy - st.hub.sy) * p).toFixed(1));
         }
       }
-      // Logotipos de las herramientas (DOM), en la misma posición proyectada
-      if (n.kind === "tool") {
-        const chip = r.chips[n.index];
-        if (chip) {
-          const sc = n.ss * (0.42 + 0.58 * gs);
-          chip.style.transform = `translate3d(${n.sx.toFixed(1)}px,${n.sy.toFixed(1)}px,0) translate(-50%,-50%) scale(${sc.toFixed(3)})`;
-          chip.style.opacity = String(0.3 + 0.7 * n.lineP);
-          chip.style.zIndex = String(Math.round((n.ss - 0.7) * 20) + (n.lit > 0.5 ? 4 : 0));
-          chip.dataset.on = n.lit > 0.7 ? "1" : "0";
-        }
-        const lab = r.labels[n.index];
-        if (lab) lab.style.opacity = String(stepOne * n.lineP);
+    });
+
+    // Red del paso 1: un solo bloque que sigue la pose del grafo; dentro, cada pieza tiene su tramo del progreso (ver
+    // network.ts). Solo cambian transform, opacity y stroke-dashoffset. Los logotipos y las píldoras compensan la escala
+    // para no encoger tanto como las distancias cuando el grafo se hace pequeño (pasos 2 y 3)
+    const net = st.net;
+    const p = Math.min(1, Math.max(0, st.t));
+    const prog = (w: [number, number]) => clamp01((p - w[0]) / (w[1] - w[0]));
+    const put = (el: HTMLElement | SVGElement | null, prop: "transform" | "opacity" | "strokeDashoffset", v: string) => {
+      if (!el) return;
+      const key = el.style;
+      const k = `${prop}:${v}`;
+      if (r.last.get(key) === k) return;
+      r.last.set(key, k);
+      el.style[prop] = v;
+    };
+    const live = staticT === null;
+    const tm = st.tm;
+    put(r.net, "transform", `translate3d(${st.hub.sx.toFixed(1)}px,${st.hub.sy.toFixed(1)}px,0) scale(${gs.toFixed(3)})`);
+    // En el escenario pequeño (tableta, pasos 2 y 3) los logotipos encogen casi como la red, para no pisarse
+    const counter = (lay.compact ? 0.05 + 0.95 * gs : 0.42 + 0.58 * gs) / gs;
+    net.tools.forEach((nt, j) => {
+      const i = TOOLS.findIndex((x) => x.id === nt.id);
+      const w = prog(nt.win);
+      const app = easeOut(clamp01(w / 0.6));
+      // Llega desde un poco más lejos del centro y, ya conectada, flota muy poco
+      const len = Math.hypot(nt.x, nt.y) || 1;
+      const off = 22 * (1 - app);
+      const fl = live ? clamp01((w - 0.85) / 0.15) * 2.2 : 0;
+      const dx = (nt.x / len) * off + Math.sin(tm * 0.8 + j * 1.7) * fl;
+      const dy = (nt.y / len) * off + Math.cos(tm * 0.65 + j * 1.1) * fl;
+      put(r.chips[i], "transform", `translate(-50%,-50%) translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(${((0.6 + 0.4 * app) * counter).toFixed(3)})`);
+      put(r.chips[i], "opacity", app.toFixed(3));
+      put(r.labels[i], "opacity", (stepOne * clamp01((w - 0.35) / 0.5)).toFixed(3));
+    });
+    net.groups.forEach((g, i) => {
+      const a = easeOut(prog(g.win)) * stepOne;
+      put(r.gHalos[i], "opacity", a.toFixed(3));
+      put(r.caps[i], "opacity", a.toFixed(3));
+      put(r.caps[i], "transform", `translate(-50%,-50%) scale(${counter.toFixed(3)})`);
+    });
+    net.edges.forEach((e, i) => {
+      const k = prog(e.win);
+      const drawn = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      put(r.edges[i], "strokeDashoffset", (1 - drawn).toFixed(3));
+      put(r.edges[i], "opacity", (k > 0 ? (e.kind === "minor" ? stepOne : 1) : 0).toFixed(3));
+    });
+    net.pills.forEach((pl, i) => {
+      const app = easeOut(prog(pl.win));
+      const fl = live ? app * 1.6 : 0;
+      put(r.pills[i], "transform", `translate(-50%,-50%) translate(${(Math.sin(tm * 0.7 + i * 2.1) * fl).toFixed(1)}px,${(Math.cos(tm * 0.6 + i) * fl).toFixed(1)}px) scale(${((0.75 + 0.25 * app) * counter).toFixed(3)})`);
+      put(r.pills[i], "opacity", (app * stepOne).toFixed(3));
+    });
+    net.dots.forEach((d, i) => put(r.netDots[i], "opacity", (easeOut(prog(d.win)) * stepOne).toFixed(3)));
+    // Pulsos: datos que viajan por las líneas hacia Fivo. Su aparición depende del scroll; su recorrido, del reloj
+    const pulseOn = live ? clamp01((p - NT.pulses[0]) / (NT.pulses[1] - NT.pulses[0])) * stepOne : 0;
+    net.edges.forEach((e, i) => {
+      if (e.kind !== "hub") return;
+      const el = r.netPulses[i];
+      if (!el) return;
+      const ph = (tm / 2.6 + i * 0.283) % 1;
+      const k = ph / 0.6;
+      if (pulseOn <= 0 || k >= 1) {
+        put(el, "opacity", "0");
+        return;
       }
+      const pt = edgePoint(e, easeOut(k));
+      put(el, "transform", `translate(${pt.x.toFixed(1)}px,${pt.y.toFixed(1)}px)`);
+      put(el, "opacity", (pulseOn * Math.sin(Math.PI * k)).toFixed(3));
     });
     if (r.hubGlow) {
       r.hubGlow.setAttribute("cx", st.hub.sx.toFixed(1));
       r.hubGlow.setAttribute("cy", st.hub.sy.toFixed(1));
       r.hubGlow.setAttribute("r", (104 * gs).toFixed(1));
+      r.hubGlow.style.opacity = st.hubIn.toFixed(3);
     }
     if (r.hubRing) {
       r.hubRing.setAttribute("cx", st.hub.sx.toFixed(1));
       r.hubRing.setAttribute("cy", st.hub.sy.toFixed(1));
       r.hubRing.setAttribute("r", (62 * (0.5 + 0.5 * gs)).toFixed(1));
+      r.hubRing.style.opacity = st.hubIn.toFixed(3);
     }
     if (r.hubChip) {
-      r.hubChip.style.transform = `translate3d(${st.hub.sx.toFixed(1)}px,${st.hub.sy.toFixed(1)}px,0) translate(-50%,-50%) scale(${(0.42 + 0.58 * gs).toFixed(3)})`;
+      r.hubChip.style.transform = `translate3d(${st.hub.sx.toFixed(1)}px,${st.hub.sy.toFixed(1)}px,0) translate(-50%,-50%) scale(${((0.42 + 0.58 * gs) * (0.6 + 0.4 * st.hubIn)).toFixed(3)})`;
+      r.hubChip.style.opacity = st.hubIn.toFixed(3);
     }
 
     // Videollamada
@@ -344,7 +422,9 @@ export default function HowStage({ toolIds, scene, getT, staticT, use3d, onFrame
       raf = 0;
       if (!visible) return;
       const target = getT();
-      disp = Math.abs(target - disp) < 0.0004 ? target : lerp(disp, target, 0.16);
+      // Un poco de suavizado para la rueda del ratón; un salto grande (scroll rápido, enlace) va directo a su estado
+      const gap = Math.abs(target - disp);
+      disp = gap < 0.0004 || gap > 0.15 ? target : lerp(disp, target, 0.2);
       apply(computeState(disp, now / 1000, layoutRef.current, false, TOOLS));
       raf = requestAnimationFrame(loop);
     };
@@ -387,17 +467,17 @@ export default function HowStage({ toolIds, scene, getT, staticT, use3d, onFrame
           </defs>
           <circle ref={(e) => { R.current.hubGlow = e; }} fill="url(#how-hub)" />
           <circle ref={(e) => { R.current.hubRing = e; }} fill="none" stroke="var(--color-accent)" strokeOpacity="0.5" />
-          {Array.from({ length: NODE_COUNT }, (_, i) => (
-            <line key={`l${i}`} ref={set(R.current.lines, i)} stroke="var(--color-accent)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+          {Array.from({ length: NODE_COUNT - TOOLS.length }, (_, j) => (
+            <line key={`l${j}`} ref={set(R.current.lines, TOOLS.length + j)} stroke="var(--color-accent)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
           ))}
-          {Array.from({ length: NODE_COUNT }, (_, i) => (
-            <circle key={`h${i}`} ref={set(R.current.halos, i)} fill="url(#how-halo)" />
+          {Array.from({ length: NODE_COUNT - TOOLS.length }, (_, j) => (
+            <circle key={`h${j}`} ref={set(R.current.halos, TOOLS.length + j)} fill="url(#how-halo)" />
           ))}
           {Array.from({ length: NODE_COUNT - TOOLS.length }, (_, j) => (
             <circle key={`c${j}`} ref={set(R.current.cores, TOOLS.length + j)} fill="var(--color-fg)" />
           ))}
-          {Array.from({ length: NODE_COUNT }, (_, i) => (
-            <circle key={`p${i}`} ref={set(R.current.pulses, i)} r="3.5" fill="var(--color-accent)" style={{ opacity: 0 }} />
+          {Array.from({ length: NODE_COUNT - TOOLS.length }, (_, j) => (
+            <circle key={`p${j}`} ref={set(R.current.pulses, TOOLS.length + j)} r="3.5" fill="var(--color-accent)" style={{ opacity: 0 }} />
           ))}
         </svg>
       )}
@@ -413,26 +493,105 @@ export default function HowStage({ toolIds, scene, getT, staticT, use3d, onFrame
         <img src="/logos/fivo-mark.svg" alt="" width={30} height={35} className="h-[35px] w-[30px]" />
       </div>
 
-      {/* Herramientas como nodos */}
-      {TOOLS.map((n, i) => (
-        <div key={n.id} ref={set(R.current.chips, i)} className="how-chip absolute left-0 top-0" style={{ opacity: 0.3 }}>
-          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-transparent bg-fg [[data-on='1']_&]:border-accent">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`/logos/tools/${n.file}`} alt="" width={n.icon ?? 24} height={n.icon ?? 24} className="object-contain" style={{ width: n.icon ?? 24, height: n.icon ?? 24 }} />
-          </div>
+      {/* Red del paso 1 (ver network.ts): conexiones, nodos secundarios y herramientas, con origen en Fivo */}
+      <div ref={(e) => { R.current.net = e; }} className="absolute left-0 top-0" style={{ zIndex: 5, willChange: "transform" }}>
+        <svg className="absolute left-0 top-0 overflow-visible" width="1" height="1">
+          <defs>
+            <linearGradient id={`how-net-grad${uid}`} gradientUnits="userSpaceOnUse" x1={-NET.W / 2} y1={-NET.H / 2} x2={NET.W / 2} y2={NET.H / 2}>
+              <stop offset="0" stopColor="var(--color-grad-a)" />
+              <stop offset="1" stopColor="var(--color-grad-b)" />
+            </linearGradient>
+            <radialGradient id={`how-group${uid}`}>
+              <stop offset="0" stopColor="var(--color-grad-a)" stopOpacity="0.16" />
+              <stop offset="1" stopColor="var(--color-grad-a)" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id={`how-dot-glow${uid}`}>
+              <stop offset="0" stopColor="var(--color-grad-b)" stopOpacity="0.55" />
+              <stop offset="1" stopColor="var(--color-grad-b)" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          {NET.groups.map((g, i) => (
+            <circle key={g.id} ref={set(R.current.gHalos, i)} cx={g.x} cy={g.y} r={g.r} fill={`url(#how-group${uid})`} style={{ opacity: 0 }} />
+          ))}
+          {NET.edges.map((e, i) => (
+            <path
+              key={e.id}
+              ref={set(R.current.edges, i)}
+              d={e.d}
+              fill="none"
+              {...EDGE_STYLE[e.kind]}
+              stroke={e.kind === "hub" ? `url(#how-net-grad${uid})` : EDGE_STYLE[e.kind].stroke}
+              pathLength={1}
+              strokeDasharray="1 1"
+              style={{ strokeDashoffset: 1, opacity: 0 }}
+            />
+          ))}
+          {NET.dots.map((d, i) => (
+            <g key={d.id} ref={set(R.current.netDots, i)} style={{ opacity: 0 }}>
+              <circle cx={d.x} cy={d.y} r="8" fill={`url(#how-dot-glow${uid})`} />
+              <circle cx={d.x} cy={d.y} r="2.4" fill="var(--color-grad-b)" />
+            </g>
+          ))}
+          {NET.edges.map((e, i) =>
+            e.kind === "hub" ? (
+              <g key={`p-${e.id}`} ref={set(R.current.netPulses, i)} style={{ opacity: 0 }}>
+                <circle r="7" fill={`url(#how-dot-glow${uid})`} />
+                <circle r="2.2" fill="var(--color-fg)" />
+              </g>
+            ) : null,
+          )}
+        </svg>
+
+        {NET.groups.map((g, i) => (
           <span
-            ref={set(R.current.labels, i)}
-            className="absolute left-1/2 top-full mt-1.5 w-max max-w-[92px] -translate-x-1/2 px-1 text-center text-[13px] leading-tight text-fg-muted"
+            key={g.id}
+            ref={set(R.current.caps, i)}
+            data-net-cap
+            className="absolute whitespace-nowrap text-[10px] font-semibold uppercase leading-none tracking-[0.12em] text-fg-subtle"
+            style={{ left: g.cap.x, top: g.cap.y, transform: "translate(-50%,-50%)", textShadow: LABEL_HALO, opacity: 0 }}
           >
-            {n.short ? (
-              <>
-                <span className="md:hidden">{n.short}</span>
-                <span className="max-md:hidden">{n.name}</span>
-              </>
-            ) : n.name}
+            {g.label}
           </span>
-        </div>
-      ))}
+        ))}
+
+        {NET.pills.map((pl, i) => (
+          <span
+            key={pl.id}
+            ref={set(R.current.pills, i)}
+            data-net-pill
+            className="absolute flex items-center gap-1.5 whitespace-nowrap rounded-full border border-line-strong bg-glass px-2.5 py-[5px] text-[11px] font-medium leading-none text-fg-muted"
+            style={{ left: pl.x, top: pl.y, transform: "translate(-50%,-50%)", opacity: 0 }}
+          >
+            <i aria-hidden className="h-1.5 w-1.5 rounded-full bg-brand" style={{ boxShadow: "0 0 6px var(--color-grad-b)" }} />
+            {pl.label}
+          </span>
+        ))}
+
+        {NET.tools.map((nt) => {
+          const i = TOOLS.findIndex((x) => x.id === nt.id);
+          const n = TOOLS[i];
+          return (
+            <div key={n.id} ref={set(R.current.chips, i)} className="how-chip absolute" style={{ left: nt.x, top: nt.y, transform: "translate(-50%,-50%)", opacity: 0 }}>
+              <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-fg" style={{ boxShadow: "0 0 0 1px color-mix(in srgb, var(--color-accent) 45%, transparent), 0 0 22px color-mix(in srgb, var(--color-accent) 28%, transparent)" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`/logos/tools/${n.file}`} alt="" width={n.icon ?? 24} height={n.icon ?? 24} className="object-contain" style={{ width: n.icon ?? 24, height: n.icon ?? 24 }} />
+              </div>
+              <span
+                ref={set(R.current.labels, i)}
+                className="absolute left-1/2 top-full mt-1.5 w-max max-w-[92px] -translate-x-1/2 px-1 text-center text-[13px] leading-tight text-fg-muted"
+                style={{ textShadow: LABEL_HALO }}
+              >
+                {n.short ? (
+                  <>
+                    <span className="md:hidden">{n.short}</span>
+                    <span className="max-md:hidden">{n.name}</span>
+                  </>
+                ) : n.name}
+              </span>
+            </div>
+          );
+        })}
+      </div>
 
       {/* Enlaces de las llamadas hacia el chat */}
       <svg className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" style={{ zIndex: compact ? 7 : 9 }}>

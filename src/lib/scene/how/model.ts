@@ -1,10 +1,12 @@
-import { TOOLS, rng } from "../graph";
+import { TOOLS } from "../graph";
 import type { ToolNode } from "../graph";
 import { clamp01, easeOut } from "../motion";
+import { buildNetwork } from "./network";
+import type { Network } from "./network";
 
 /**
  * Línea de tiempo única del bloque "Cómo funciona". t va de 0 a 3:
- *   0 a 1  paso 1: las herramientas se enganchan al nodo de Fivo
+ *   0 a 1  paso 1: la red de herramientas se forma alrededor del nodo de Fivo (ver network.ts)
  *   1 a 2  paso 2: videollamada, transcripción, resumen y nodo nuevo que vuela al grafo
  *   2 a 3  paso 3: pregunta, nodos de llamadas que se encienden y respuesta con referencias
  * Cada escena acaba exactamente donde empieza la siguiente. El 3D, el SVG y el estado
@@ -13,6 +15,11 @@ import { clamp01, easeOut } from "../motion";
 
 export const D = 14; // distancia de cámara (unidades de mundo)
 export const STATIC_T = [1.0, 1.78, 3.0]; // estado final entendible de cada escena
+/**
+ * Antes del paso 1, mientras el escenario sube hasta quedar fijo, el progreso va de -HUB_PRE a 0 y en ese tramo entra el
+ * nodo de Fivo: cuando empiezan a llegar las herramientas, ya está en el centro.
+ */
+export const HUB_PRE = 0.12;
 
 const easeInOut = (k: number) => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
 const mix = (a: number, b: number, k: number) => a + (b - a) * k;
@@ -24,15 +31,9 @@ export type Layout = {
   H: number;
   unit: number;
   compact: boolean;
+  /** Óvalo donde caen los nodos de llamadas de los pasos 2 y 3. */
   RX: number;
   RY: number;
-  /**
-   * Óvalo apaisado (tableta y escritorio): el anillo gira 90° más medio paso, así las etiquetas largas quedan arriba y
-   * abajo (donde los vecinos están lado a lado) y en cada lado hay una pareja simétrica de etiquetas cortas.
-   */
-  turn: boolean;
-  /** Amplitud del giro suave del grafo (radianes). */
-  sway: number;
   center: Pose;
   corner: Pose;
   right: Pose;
@@ -45,16 +46,11 @@ export function makeLayout(W: number, H: number): Layout {
   const compact = W < 560;
   if (compact) {
     const unit = Math.min(W / 9, H / 10.2);
-    // Óvalo que aprovecha el escenario sin salirse: en vertical deja sitio al icono y a su etiqueta (1,6 unidades) y en
-    // horizontal a media etiqueta larga (1,4). En móvil (escenario alto) sale un óvalo alto; en tableta (escenario
-    // apaisado y bajo) uno ancho, y entonces el anillo gira 90° (ver `turn`). Por debajo de 390 px el escenario del
-    // paso 1 es aún más alto (3:5,5) y el óvalo puede estirarse más para que los 11 nodos no se pisen.
-    const RY = Math.min(H / W > 1.7 ? 8.5 : 7.2, (H / 2 / unit - 1.6) / 0.8);
+    const RY = Math.min(7.2, (H / 2 / unit - 1.6) / 0.8);
     const RX = Math.min(6.4, (W / 2 / unit - 1.4) / 0.86);
-    const turn = RX * 0.86 > RY * 0.8;
     return {
-      W, H, unit, compact, RX, RY, turn, sway: 0.3,
-      center: { x: 0, y: 0.2, s: 1 },
+      W, H, unit, compact, RX, RY,
+      center: { x: 0, y: 0, s: 1 },
       corner: { x: 0, y: 4.55, s: 0.3 },
       right: { x: 0, y: 4.6, s: 0.32 },
       call: { x: W * 0.02, y: H * 0.3, w: W * 0.96, h: H * 0.68 },
@@ -63,8 +59,7 @@ export function makeLayout(W: number, H: number): Layout {
   }
   const unit = Math.min(W / 8.8, H / 6.4);
   return {
-    // Óvalo apaisado: el anillo gira 90° como en tableta, con las etiquetas largas arriba y abajo
-    W, H, unit, compact, RX: 3.15, RY: 2.6, turn: true, sway: 0.42,
+    W, H, unit, compact, RX: 3.15, RY: 2.6,
     center: { x: 0, y: 0, s: 1 },
     corner: { x: 2.35, y: 1.75, s: 0.4 },
     right: { x: 2.2, y: 0, s: 0.68 },
@@ -106,24 +101,14 @@ const CALL_BASE = [
 /** Llamadas de donde sale la respuesta del paso 3 */
 export const SOURCES = [0, 2, 3];
 
-const scatterCache = new Map<number, { x: number; y: number; z: number }[]>();
-function scatterFor(count: number) {
-  const hit = scatterCache.get(count);
-  if (hit) return hit;
-  const r = rng(5);
-  const built = Array.from({ length: count }, () => {
-    const ang = r() * Math.PI * 2;
-    const rad = 0.78 + r() * 0.5;
-    return { x: Math.cos(ang) * rad, y: Math.sin(ang) * rad, z: (r() - 0.5) * 3.6 };
-  });
-  scatterCache.set(count, built);
-  return built;
-}
-
 /* ------------------------------------------------------------------ estado */
 
 export type HowState = {
   t: number;
+  /** Red del paso 1, en px desde Fivo (escala 1: el escenario la mueve y la escala con la pose del grafo). */
+  net: Network;
+  /** Entrada del nodo de Fivo (0 a 1). */
+  hubIn: number;
   tm: number;
   L: Layout;
   hub: { X: number; Y: number; sx: number; sy: number; ss: number; s: number };
@@ -157,7 +142,7 @@ export type HowState = {
 };
 
 export function computeState(tRaw: number, tm: number, L: Layout, forceStatic = false, tools: ToolNode[] = TOOLS): HowState {
-  const scatter = scatterFor(tools.length);
+  const net = buildNetwork(L.W, L.H, tools);
   const t = Math.min(3, Math.max(0, tRaw));
   const u2 = clamp01(t - 1);
   const u3 = clamp01(t - 2);
@@ -168,7 +153,8 @@ export function computeState(tRaw: number, tm: number, L: Layout, forceStatic = 
   const toCorner = { x: mix(L.center.x, L.corner.x, k1), y: mix(L.center.y, L.corner.y, k1), s: mix(L.center.s, L.corner.s, k1) };
   const g = { x: mix(toCorner.x, L.right.x, k2), y: mix(toCorner.y, L.right.y, k2), s: mix(toCorner.s, L.right.s, k2) };
   const g0 = { s: g.s };
-  const yaw = Math.sin(tm * 0.18 + t * 0.8) * L.sway;
+  // El grafo ya no gira: sus piezas tienen sitio fijo y solo flotan un poco (HowStage)
+  const yaw = 0;
   const cy = Math.cos(yaw);
   const sy = Math.sin(yaw);
   const tilt = 0.16;
@@ -187,38 +173,21 @@ export function computeState(tRaw: number, tm: number, L: Layout, forceStatic = 
   };
 
   const nodes: NodeState[] = [];
-  const turnA = ((90 + 180 / tools.length) * Math.PI) / 180;
-  const turnCos = Math.cos(turnA);
-  const turnSin = Math.sin(turnA);
+  const hub0 = project(0, 0, 0);
 
-  // Herramientas: dispersas, se enganchan una a una
+  // Herramientas: en su sitio de la red; `lineP` es su avance de entrada (0 a 1) y `lit` el brillo al conectar
   tools.forEach((n, i) => {
-    const a = 0.04 + i * 0.088;
-    const w = clamp01((t - a) / 0.16);
-    const move = easeOut(clamp01(w / 0.5));
-    // Con `turn`, el ángulo de cada nodo en el anillo avanza 90° más medio paso, sin cambiar el orden
-    const ca = n.u / 0.86;
-    const sa = n.v / 0.8;
-    const ring = L.turn
-      ? { x: (ca * turnCos - sa * turnSin) * 0.86 * L.RX, y: (sa * turnCos + ca * turnSin) * 0.8 * L.RY, z: n.z }
-      : { x: n.u * L.RX, y: n.v * L.RY, z: n.z };
-    const sc = scatter[i];
-    const drift = Math.sin(tm * 0.5 + i * 1.7) * 0.1;
-    const sx0 = sc.x * L.RX * 1.15 + drift;
-    const sy0 = sc.y * L.RY * 1.2 + Math.cos(tm * 0.43 + i) * 0.1;
-    // Los nodos dispersos se quedan dentro del escenario
-    const maxX = (L.W / 2 - 40) / L.unit / g0.s;
-    const maxY = (L.H / 2 - 44) / L.unit / g0.s;
-    const x = mix(Math.max(-maxX, Math.min(maxX, sx0)), ring.x, move);
-    const y = mix(Math.max(-maxY, Math.min(maxY, sy0)), ring.y, move);
-    const z = mix(sc.z, ring.z, move);
-    const pr = project(x, y, z);
-    const lineP = easeOut(clamp01(w / 0.45));
-    const pulseW = (w - 0.45) / 0.4;
-    const pulse = w > 0.45 && w < 0.85 ? pulseW : -1;
-    const flash = easeOut(clamp01((w - 0.8) / 0.2));
-    const lit = w >= 1 ? 0.5 : flash;
-    nodes.push({ id: n.id, kind: "tool", index: i, ...pr, appear: 1, lineP, lit: Math.max(lit, w > 0 ? 0.0 : 0), pulse });
+    const nt = net.tools.find((x) => x.id === n.id);
+    const w = nt ? clamp01((t - nt.win[0]) / (nt.win[1] - nt.win[0])) : 1;
+    const x = nt?.x ?? 0;
+    const y = nt?.y ?? 0;
+    const flash = easeOut(clamp01((w - 0.75) / 0.25));
+    nodes.push({
+      id: n.id, kind: "tool", index: i,
+      X: hub0.X + x / L.unit * g.s, Y: hub0.Y - y / L.unit * g.s, Z: 0,
+      sx: hub0.sx + x * g.s, sy: hub0.sy + y * g.s, ss: 1,
+      appear: 1, lineP: easeOut(w), lit: w >= 1 ? 0.5 : flash, pulse: -1,
+    });
   });
 
   // Nodos de llamadas: el primero llega volando (fin del paso 2), el resto aparecen al empezar el paso 3
@@ -239,7 +208,7 @@ export function computeState(tRaw: number, tm: number, L: Layout, forceStatic = 
     c0.lit = 0.6;
   }
 
-  const hubP = project(0, 0, 0);
+  const hubP = hub0;
 
   /* ----- paso 2: videollamada */
   const callOp = easeOut(clamp01((u2 - 0.02) / 0.1)) * (1 - clamp01((u2 - 0.88) / 0.1));
@@ -274,6 +243,8 @@ export function computeState(tRaw: number, tm: number, L: Layout, forceStatic = 
     hub: { X: hubP.X, Y: hubP.Y, sx: hubP.sx, sy: hubP.sy, ss: hubP.ss, s: g.s },
     nodes,
     active: t < 1.06 ? 0 : t < 2.06 ? 1 : 2,
+    net,
+    hubIn: easeOut(clamp01((tRaw + HUB_PRE) / (HUB_PRE * 0.8))),
     call: {
       op: callOp, tiles, assistant, speaker, wave, lines, transcriptOp, summary, bullets, shrink, fly,
       flyFrom: { x: L.call.x + L.call.w * 0.5, y: L.call.y + L.call.h * 0.74 },

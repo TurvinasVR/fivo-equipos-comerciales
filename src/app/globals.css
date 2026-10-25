@@ -667,3 +667,36 @@ html[data-brand-icons] .icon-brand { fill: url(#fivo-grad); }
   .reviews-marquee::-webkit-scrollbar { display: none; }
   .reviews-track { animation: none; }
 }
+
+/* Paso 1 de "Cómo funciona" en móvil y tableta: el escenario se queda fijo, centrado entre la barra superior y el botón
+   fijo, mientras se forma la red (--pin de scroll). El paso 2 no llega hasta que el recorrido termina. */
+.how-pin {
+  --bar: 49px;
+  /* Alto libre entre la barra y el botón fijo; el escenario no pasa de ahí salvo en pantallas muy bajas (mín. 500 px) */
+  --room: max(500px, calc(100svh - var(--bar) - var(--sticky-cta-h, 90px) - 12px));
+  --sh: min(calc((100vw - 40px) * 5 / 3), var(--room));
+  --pin: 95svh;
+  height: calc(var(--sh) + var(--pin));
+}
+@media (max-width: 389.98px) {
+  .how-pin {
+    --sh: min(calc((100vw - 40px) * 5.5 / 3), var(--room));
+  }
+}
+@media (min-width: 768px) {
+  .how-pin {
+    --room: max(420px, calc(100svh - var(--bar) - 24px));
+    --sh: min((100vw - 40px) * 0.8, 620px, var(--room));
+    --pin: 80svh;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .how-pin {
+    --pin: 0px;
+  }
+}
+.how-pin__stick {
+  position: sticky;
+  height: var(--sh);
+  top: calc(var(--bar) + (100svh - var(--bar) - var(--sticky-cta-h, 0px) - var(--sh)) / 2);
+}

@@ -2,6 +2,7 @@ import { toolsFor } from "@/lib/scene/graph";
 import type { ToolId } from "@/lib/scene/graph";
 import type { HowScene } from "@/content/types";
 import { STATIC_T, computeState, makeLayout } from "@/lib/scene/how/model";
+import { EDGE_STYLE } from "./edgeStyle";
 
 /**
  * Estado inicial estático de cada escena de "Cómo funciona": el grafo con sus nodos y líneas en la posición
@@ -11,18 +12,22 @@ import { STATIC_T, computeState, makeLayout } from "@/lib/scene/how/model";
  */
 const SIZES = { wide: { W: 720, H: 540 }, compact: { W: 350, H: 500 } } as const;
 /** El paso 1 tiene un escenario más alto (ver HowItWorks): mismas proporciones aquí para que no haya salto. */
-const SIZES_STEP1 = { wide: { W: 720, H: 720 }, compact: { W: 350, H: 583 } } as const;
+const SIZES_STEP1 = { wide: { W: 728, H: 582 }, compact: { W: 350, H: 583 } } as const;
+/** Escenario fijo de escritorio (ver HowItWorks): unos 786 x 640 px. */
+const SIZE_STICKY = { W: 786, H: 640 } as const;
 
 const Dot = ({ tone }: { tone: "win" | "lose" }) => <i aria-hidden className={`status-dot ${tone === "lose" ? "text-danger" : "text-success"}`} />;
 
-export function HowPoster({ k, toolIds, scene, compact = false }: { k: 0 | 1 | 2; toolIds: ToolId[]; scene: HowScene; compact?: boolean }) {
+export function HowPoster({ k, toolIds, scene, compact = false, sticky = false }: { k: 0 | 1 | 2; toolIds: ToolId[]; scene: HowScene; compact?: boolean; sticky?: boolean }) {
   const sizes = k === 0 ? SIZES_STEP1 : SIZES;
-  const { W, H } = compact ? sizes.compact : sizes.wide;
+  const { W, H } = sticky ? SIZE_STICKY : compact ? sizes.compact : sizes.wide;
   const L = makeLayout(W, H);
   const tools = toolsFor(toolIds);
   const st = computeState(STATIC_T[k], 0, L, true, tools);
   const gs = st.hub.s;
   const stepOne = Math.min(1, Math.max(0, (gs - 0.8) / 0.2));
+  // Los logotipos y las píldoras encogen menos que las distancias cuando el grafo se hace pequeño (como en HowStage)
+  const counter = (L.compact ? 0.05 + 0.95 * gs : 0.42 + 0.58 * gs) / gs;
   const pct = (v: number, of: number) => `${((v / of) * 100).toFixed(2)}%`;
   const box = k === 1 ? L.call : L.chat;
 
@@ -36,18 +41,59 @@ export function HowPoster({ k, toolIds, scene, compact = false }: { k: 0 | 1 | 2
           </radialGradient>
         </defs>
         <circle cx={st.hub.sx} cy={st.hub.sy} r={104 * gs} fill={`url(#hp-hub-${k}${compact ? "c" : ""})`} />
-        {st.nodes.map((n) => (
-          <line
-            key={n.id}
-            x1={st.hub.sx}
-            y1={st.hub.sy}
-            x2={st.hub.sx + (n.sx - st.hub.sx) * n.lineP}
-            y2={st.hub.sy + (n.sy - st.hub.sy) * n.lineP}
-            stroke="var(--color-accent)"
-            strokeWidth="1"
-            strokeOpacity={(0.18 + n.lit * 0.55) * n.appear}
-          />
-        ))}
+        {st.nodes.map((n) =>
+          n.kind === "call" ? (
+            <line key={n.id} x1={st.hub.sx} y1={st.hub.sy} x2={st.hub.sx + (n.sx - st.hub.sx) * n.lineP} y2={st.hub.sy + (n.sy - st.hub.sy) * n.lineP} stroke="var(--color-accent)" strokeWidth="1" strokeOpacity={(0.18 + n.lit * 0.55) * n.appear} />
+          ) : null,
+        )}
+        {/* Red del paso 1, en px desde Fivo */}
+        <g transform={`translate(${st.hub.sx} ${st.hub.sy}) scale(${gs})`}>
+          <defs>
+            <linearGradient id={`hp-net-${k}${compact ? "c" : ""}`} gradientUnits="userSpaceOnUse" x1={-W / 2} y1={-H / 2} x2={W / 2} y2={H / 2}>
+              <stop offset="0" stopColor="var(--color-grad-a)" />
+              <stop offset="1" stopColor="var(--color-grad-b)" />
+            </linearGradient>
+          </defs>
+          <g opacity={stepOne}>
+            {st.net.groups.map((g) => (
+              <circle key={g.id} cx={g.x} cy={g.y} r={g.r} fill="var(--color-grad-a)" opacity="0.05" />
+            ))}
+          </g>
+          {st.net.edges.map((e) => (
+            <path
+              key={e.id}
+              d={e.d}
+              fill="none"
+              {...EDGE_STYLE[e.kind]}
+              stroke={e.kind === "hub" ? `url(#hp-net-${k}${compact ? "c" : ""})` : EDGE_STYLE[e.kind].stroke}
+              opacity={e.kind === "minor" ? stepOne : 1}
+              vectorEffect="non-scaling-stroke"
+            />
+          ))}
+          <g opacity={stepOne}>
+            {st.net.dots.map((d) => (
+              <g key={d.id}>
+                <circle cx={d.x} cy={d.y} r="8" fill="var(--color-grad-b)" opacity="0.18" />
+                <circle cx={d.x} cy={d.y} r="2.4" fill="var(--color-grad-b)" />
+              </g>
+            ))}
+            {st.net.groups.map((g) => (
+              <text key={g.id} x={g.cap.x} y={g.cap.y + 3.5} textAnchor="middle" fontSize={10 * counter} fontWeight="600" letterSpacing="1.2" fill="var(--color-fg-subtle)">
+                {g.label.toUpperCase()}
+              </text>
+            ))}
+            {st.net.pills.map((pl) => {
+              const w = pl.label.length * 6.3 + 30;
+              return (
+                <g key={pl.id} transform={`translate(${pl.x} ${pl.y}) scale(${counter})`}>
+                  <rect x={-w / 2} y={-11} width={w} height={22} rx={11} fill="var(--color-glass)" stroke="var(--color-line-strong)" />
+                  <circle cx={-w / 2 + 13} cy={0} r={3} fill="var(--color-grad-b)" />
+                  <text x={-w / 2 + 22} y={4} fontSize="11" fontWeight="500" fill="var(--color-fg-muted)">{pl.label}</text>
+                </g>
+              );
+            })}
+          </g>
+        </g>
         {st.nodes.map((n) =>
           n.kind === "call" ? (
             <circle key={n.id} cx={n.sx} cy={n.sy} r={3.2 * n.ss * (0.6 + 0.4 * gs)} fill="var(--color-fg)" opacity={n.appear} />
@@ -57,16 +103,15 @@ export function HowPoster({ k, toolIds, scene, compact = false }: { k: 0 | 1 | 2
         <circle cx={st.hub.sx} cy={st.hub.sy} r={43 * (0.42 + 0.58 * gs)} fill="var(--color-bg)" stroke="var(--color-accent)" strokeOpacity="0.6" />
         <image href="/logos/fivo-mark.svg" x={st.hub.sx - 15 * (0.42 + 0.58 * gs)} y={st.hub.sy - 17.5 * (0.42 + 0.58 * gs)} width={30 * (0.42 + 0.58 * gs)} height={35 * (0.42 + 0.58 * gs)} />
         {/* Herramientas */}
-        {st.nodes.map((n) => {
-          if (n.kind !== "tool") return null;
-          const t = tools[n.index];
-          const sc = n.ss * (0.42 + 0.58 * gs);
+        {st.net.tools.map((nt) => {
+          const t = tools.find((x) => x.id === nt.id);
+          if (!t) return null;
           return (
-            <g key={n.id} opacity={0.3 + 0.7 * n.lineP}>
-              <circle cx={n.sx} cy={n.sy} r={24 * sc} fill="var(--color-fg)" />
-              <image href={`/logos/tools/${t.file}`} x={n.sx - ((t.icon ?? 24) / 2) * sc} y={n.sy - ((t.icon ?? 24) / 2) * sc} width={(t.icon ?? 24) * sc} height={(t.icon ?? 24) * sc} />
+            <g key={nt.id} transform={`translate(${st.hub.sx + nt.x * gs} ${st.hub.sy + nt.y * gs}) scale(${counter * gs})`}>
+              <circle r={24} fill="var(--color-fg)" />
+              <image href={`/logos/tools/${t.file}`} x={-(t.icon ?? 24) / 2} y={-(t.icon ?? 24) / 2} width={t.icon ?? 24} height={t.icon ?? 24} />
               {stepOne > 0 && (
-                <text x={n.sx} y={n.sy + 24 * sc + 15} textAnchor="middle" fontSize="13" fill="var(--color-fg-muted)" opacity={stepOne * n.lineP}>
+                <text y={24 + 15} textAnchor="middle" fontSize="13" fill="var(--color-fg-muted)" opacity={stepOne}>
                   {compact ? (t.short ?? t.name) : t.name}
                 </text>
               )}
