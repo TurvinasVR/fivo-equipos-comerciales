@@ -6,7 +6,7 @@ import type { Network } from "./network";
 
 /**
  * Línea de tiempo única del bloque "Cómo funciona". t va de 0 a 3:
- *   0 a 1  paso 1: la red de herramientas se forma alrededor del nodo de Fivo (ver network.ts)
+ *   0 a 1  paso 1: la red de herramientas alrededor del nodo de Fivo, siempre completa (ver network.ts)
  *   1 a 2  paso 2: videollamada, transcripción, resumen y nodo nuevo que vuela al grafo
  *   2 a 3  paso 3: pregunta, nodos de llamadas que se encienden y respuesta con referencias
  * Cada escena acaba exactamente donde empieza la siguiente. El 3D, el SVG y el estado
@@ -15,11 +15,6 @@ import type { Network } from "./network";
 
 export const D = 14; // distancia de cámara (unidades de mundo)
 export const STATIC_T = [1.0, 1.78, 3.0]; // estado final entendible de cada escena
-/**
- * Antes del paso 1, mientras el escenario sube hasta quedar fijo, el progreso va de -HUB_PRE a 0 y en ese tramo entra el
- * nodo de Fivo: cuando empiezan a llegar las herramientas, ya está en el centro.
- */
-export const HUB_PRE = 0.12;
 
 const easeInOut = (k: number) => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
 const mix = (a: number, b: number, k: number) => a + (b - a) * k;
@@ -107,8 +102,6 @@ export type HowState = {
   t: number;
   /** Red del paso 1, en px desde Fivo (escala 1: el escenario la mueve y la escala con la pose del grafo). */
   net: Network;
-  /** Entrada del nodo de Fivo (0 a 1). */
-  hubIn: number;
   tm: number;
   L: Layout;
   hub: { X: number; Y: number; sx: number; sy: number; ss: number; s: number };
@@ -175,18 +168,16 @@ export function computeState(tRaw: number, tm: number, L: Layout, forceStatic = 
   const nodes: NodeState[] = [];
   const hub0 = project(0, 0, 0);
 
-  // Herramientas: en su sitio de la red; `lineP` es su avance de entrada (0 a 1) y `lit` el brillo al conectar
+  // Herramientas: siempre en su sitio de la red, conectadas
   tools.forEach((n, i) => {
     const nt = net.tools.find((x) => x.id === n.id);
-    const w = nt ? clamp01((t - nt.win[0]) / (nt.win[1] - nt.win[0])) : 1;
     const x = nt?.x ?? 0;
     const y = nt?.y ?? 0;
-    const flash = easeOut(clamp01((w - 0.75) / 0.25));
     nodes.push({
       id: n.id, kind: "tool", index: i,
       X: hub0.X + x / L.unit * g.s, Y: hub0.Y - y / L.unit * g.s, Z: 0,
       sx: hub0.sx + x * g.s, sy: hub0.sy + y * g.s, ss: 1,
-      appear: 1, lineP: easeOut(w), lit: w >= 1 ? 0.5 : flash, pulse: -1,
+      appear: 1, lineP: 1, lit: 0.5, pulse: -1,
     });
   });
 
@@ -244,7 +235,6 @@ export function computeState(tRaw: number, tm: number, L: Layout, forceStatic = 
     nodes,
     active: t < 1.06 ? 0 : t < 2.06 ? 1 : 2,
     net,
-    hubIn: easeOut(clamp01((tRaw + HUB_PRE) / (HUB_PRE * 0.8))),
     call: {
       op: callOp, tiles, assistant, speaker, wave, lines, transcriptOp, summary, bullets, shrink, fly,
       flyFrom: { x: L.call.x + L.call.w * 0.5, y: L.call.y + L.call.h * 0.74 },

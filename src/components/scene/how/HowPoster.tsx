@@ -67,7 +67,6 @@ export function HowPoster({ k, toolIds, scene, compact = false, sticky = false }
               {...EDGE_STYLE[e.kind]}
               stroke={e.kind === "hub" ? `url(#hp-net-${k}${compact ? "c" : ""})` : EDGE_STYLE[e.kind].stroke}
               opacity={e.kind === "minor" ? stepOne : 1}
-              vectorEffect="non-scaling-stroke"
             />
           ))}
           <g opacity={stepOne}>

@@ -82,8 +82,7 @@ function Graph({ view, stateRef, N }: { view: SceneView; stateRef: MutableRefObj
     cam.position.set(0, 0, D);
     cam.updateProjectionMatrix();
 
-    // El nodo de Fivo entra al empezar el paso 1
-    const gs = st.hub.s * Math.max(0.001, st.hubIn);
+    const gs = st.hub.s;
     const hx = st.hub.X;
     const hy = st.hub.Y;
     o.hubCore.position.set(hx, hy, 0);

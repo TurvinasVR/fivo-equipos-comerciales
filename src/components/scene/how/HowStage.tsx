@@ -6,7 +6,8 @@ import { toolsFor } from "@/lib/scene/graph";
 import type { ToolId } from "@/lib/scene/graph";
 import type { HowScene } from "@/content/types";
 import { bezier, computeState, makeLayout, SOURCES } from "@/lib/scene/how/model";
-import { buildNetwork, edgePoint, T as NT } from "@/lib/scene/how/network";
+import { buildNetwork, edgePoint } from "@/lib/scene/how/network";
+import type { Rhythm } from "@/lib/scene/how/network";
 import { EDGE_STYLE } from "./edgeStyle";
 import type { HowState } from "@/lib/scene/how/model";
 import { clamp01, easeOut, lerp } from "@/lib/scene/motion";
@@ -72,11 +73,10 @@ export default function HowStage({ toolIds, scene, getT, staticT, use3d, onFrame
     pills: [] as (HTMLElement | null)[],
     caps: [] as (HTMLElement | null)[],
     gHalos: [] as (SVGCircleElement | null)[],
-    edges: [] as (SVGPathElement | null)[],
-    netDots: [] as (SVGGElement | null)[],
+    shimmers: [] as (SVGPathElement | null)[],
     netPulses: [] as (SVGGElement | null)[],
     /** Último valor escrito en cada propiedad: solo se toca el DOM cuando cambia */
-    last: new Map<object, string>(),
+    last: new Map<object, Record<string, string>>(),
     minor: null as SVGGElement | null,
     hubGlow: null as SVGCircleElement | null,
     hubRing: null as SVGCircleElement | null,
@@ -187,18 +187,16 @@ export default function HowStage({ toolIds, scene, getT, staticT, use3d, onFrame
       }
     });
 
-    // Red del paso 1: un solo bloque que sigue la pose del grafo; dentro, cada pieza tiene su tramo del progreso (ver
-    // network.ts). Solo cambian transform, opacity y stroke-dashoffset. Los logotipos y las píldoras compensan la escala
-    // para no encoger tanto como las distancias cuando el grafo se hace pequeño (pasos 2 y 3)
+    // Red del paso 1, siempre completa: un solo bloque que sigue la pose del grafo. Por fotograma solo se mueven pulsos,
+    // brillos y un flotado muy pequeño (transform, opacity y stroke-dashoffset). Los logotipos y las píldoras compensan
+    // la escala para no encoger tanto como las distancias cuando el grafo se hace pequeño (pasos 2 y 3)
     const net = st.net;
-    const p = Math.min(1, Math.max(0, st.t));
-    const prog = (w: [number, number]) => clamp01((p - w[0]) / (w[1] - w[0]));
     const put = (el: HTMLElement | SVGElement | null, prop: "transform" | "opacity" | "strokeDashoffset", v: string) => {
       if (!el) return;
-      const key = el.style;
-      const k = `${prop}:${v}`;
-      if (r.last.get(key) === k) return;
-      r.last.set(key, k);
+      let seen = r.last.get(el);
+      if (!seen) r.last.set(el, (seen = {}));
+      if (seen[prop] === v) return;
+      seen[prop] = v;
       el.style[prop] = v;
     };
     const live = staticT === null;
@@ -208,68 +206,60 @@ export default function HowStage({ toolIds, scene, getT, staticT, use3d, onFrame
     const counter = (lay.compact ? 0.05 + 0.95 * gs : 0.42 + 0.58 * gs) / gs;
     net.tools.forEach((nt, j) => {
       const i = TOOLS.findIndex((x) => x.id === nt.id);
-      const w = prog(nt.win);
-      const app = easeOut(clamp01(w / 0.6));
-      // Llega desde un poco más lejos del centro y, ya conectada, flota muy poco
-      const len = Math.hypot(nt.x, nt.y) || 1;
-      const off = 22 * (1 - app);
-      const fl = live ? clamp01((w - 0.85) / 0.15) * 2.2 : 0;
-      const dx = (nt.x / len) * off + Math.sin(tm * 0.8 + j * 1.7) * fl;
-      const dy = (nt.y / len) * off + Math.cos(tm * 0.65 + j * 1.1) * fl;
-      put(r.chips[i], "transform", `translate(-50%,-50%) translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(${((0.6 + 0.4 * app) * counter).toFixed(3)})`);
-      put(r.chips[i], "opacity", app.toFixed(3));
-      put(r.labels[i], "opacity", (stepOne * clamp01((w - 0.35) / 0.5)).toFixed(3));
+      // Flotado de 1 px como mucho: nunca acerca dos piezas lo bastante para tocarse ni mueve las etiquetas al leerlas
+      const dx = live ? Math.sin(tm * 0.55 + j * 1.7) : 0;
+      const dy = live ? Math.cos(tm * 0.45 + j * 1.1) : 0;
+      put(r.chips[i], "transform", `translate(-50%,-50%) translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(${counter.toFixed(3)})`);
+      put(r.labels[i], "opacity", stepOne.toFixed(3));
     });
-    net.groups.forEach((g, i) => {
-      const a = easeOut(prog(g.win)) * stepOne;
-      put(r.gHalos[i], "opacity", a.toFixed(3));
-      put(r.caps[i], "opacity", a.toFixed(3));
+    net.groups.forEach((_, i) => {
+      put(r.gHalos[i], "opacity", stepOne.toFixed(3));
+      put(r.caps[i], "opacity", stepOne.toFixed(3));
       put(r.caps[i], "transform", `translate(-50%,-50%) scale(${counter.toFixed(3)})`);
     });
-    net.edges.forEach((e, i) => {
-      const k = prog(e.win);
-      const drawn = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
-      put(r.edges[i], "strokeDashoffset", (1 - drawn).toFixed(3));
-      put(r.edges[i], "opacity", (k > 0 ? (e.kind === "minor" ? stepOne : 1) : 0).toFixed(3));
+    net.pills.forEach((_, i) => {
+      const f = live ? 0.8 : 0;
+      put(r.pills[i], "transform", `translate(-50%,-50%) translate(${(Math.sin(tm * 0.5 + i * 2.1) * f).toFixed(1)}px,${(Math.cos(tm * 0.42 + i) * f).toFixed(1)}px) scale(${counter.toFixed(3)})`);
+      put(r.pills[i], "opacity", stepOne.toFixed(3));
     });
-    net.pills.forEach((pl, i) => {
-      const app = easeOut(prog(pl.win));
-      const fl = live ? app * 1.6 : 0;
-      put(r.pills[i], "transform", `translate(-50%,-50%) translate(${(Math.sin(tm * 0.7 + i * 2.1) * fl).toFixed(1)}px,${(Math.cos(tm * 0.6 + i) * fl).toFixed(1)}px) scale(${((0.75 + 0.25 * app) * counter).toFixed(3)})`);
-      put(r.pills[i], "opacity", (app * stepOne).toFixed(3));
-    });
-    net.dots.forEach((d, i) => put(r.netDots[i], "opacity", (easeOut(prog(d.win)) * stepOne).toFixed(3)));
-    // Pulsos: datos que viajan por las líneas hacia Fivo. Su aparición depende del scroll; su recorrido, del reloj
-    const pulseOn = live ? clamp01((p - NT.pulses[0]) / (NT.pulses[1] - NT.pulses[0])) * stepOne : 0;
+    put(r.minor, "opacity", stepOne.toFixed(3));
+    // Pulsos y brillos: cada línea con su ritmo (network.ts), así nunca van todos a la vez. Solo en el paso 1
+    const glow = live ? stepOne : 0;
+    const phase = (q: Rhythm) => ((tm + q.offset) / q.period) % 1 / q.travel;
     net.edges.forEach((e, i) => {
-      if (e.kind !== "hub") return;
-      const el = r.netPulses[i];
-      if (!el) return;
-      const ph = (tm / 2.6 + i * 0.283) % 1;
-      const k = ph / 0.6;
-      if (pulseOn <= 0 || k >= 1) {
-        put(el, "opacity", "0");
-        return;
+      if (e.pulse) {
+        const el = r.netPulses[i];
+        const k = phase(e.pulse);
+        if (glow <= 0 || k >= 1) put(el, "opacity", "0");
+        else {
+          const pt = edgePoint(e, k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
+          put(el, "transform", `translate(${pt.x.toFixed(1)}px,${pt.y.toFixed(1)}px)`);
+          put(el, "opacity", (glow * Math.sin(Math.PI * k)).toFixed(3));
+        }
       }
-      const pt = edgePoint(e, easeOut(k));
-      put(el, "transform", `translate(${pt.x.toFixed(1)}px,${pt.y.toFixed(1)}px)`);
-      put(el, "opacity", (pulseOn * Math.sin(Math.PI * k)).toFixed(3));
+      if (e.shimmer) {
+        const el = r.shimmers[i];
+        const k = phase(e.shimmer);
+        if (glow <= 0 || k >= 1) put(el, "opacity", "0");
+        else {
+          // Un tramo de luz (0,22 de la línea) que avanza hacia Fivo y se apaga en los extremos
+          put(el, "strokeDashoffset", (0.22 - 1.22 * k).toFixed(3));
+          put(el, "opacity", (glow * 0.85 * Math.sin(Math.PI * k)).toFixed(3));
+        }
+      }
     });
     if (r.hubGlow) {
       r.hubGlow.setAttribute("cx", st.hub.sx.toFixed(1));
       r.hubGlow.setAttribute("cy", st.hub.sy.toFixed(1));
       r.hubGlow.setAttribute("r", (104 * gs).toFixed(1));
-      r.hubGlow.style.opacity = st.hubIn.toFixed(3);
     }
     if (r.hubRing) {
       r.hubRing.setAttribute("cx", st.hub.sx.toFixed(1));
       r.hubRing.setAttribute("cy", st.hub.sy.toFixed(1));
       r.hubRing.setAttribute("r", (62 * (0.5 + 0.5 * gs)).toFixed(1));
-      r.hubRing.style.opacity = st.hubIn.toFixed(3);
     }
     if (r.hubChip) {
-      r.hubChip.style.transform = `translate3d(${st.hub.sx.toFixed(1)}px,${st.hub.sy.toFixed(1)}px,0) translate(-50%,-50%) scale(${((0.42 + 0.58 * gs) * (0.6 + 0.4 * st.hubIn)).toFixed(3)})`;
-      r.hubChip.style.opacity = st.hubIn.toFixed(3);
+      r.hubChip.style.transform = `translate3d(${st.hub.sx.toFixed(1)}px,${st.hub.sy.toFixed(1)}px,0) translate(-50%,-50%) scale(${(0.42 + 0.58 * gs).toFixed(3)})`;
     }
 
     // Videollamada
@@ -501,6 +491,10 @@ export default function HowStage({ toolIds, scene, getT, staticT, use3d, onFrame
               <stop offset="0" stopColor="var(--color-grad-a)" />
               <stop offset="1" stopColor="var(--color-grad-b)" />
             </linearGradient>
+            <linearGradient id={`how-pulse${uid}`} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="var(--color-grad-a)" />
+              <stop offset="1" stopColor="var(--color-grad-b)" />
+            </linearGradient>
             <radialGradient id={`how-group${uid}`}>
               <stop offset="0" stopColor="var(--color-grad-a)" stopOpacity="0.16" />
               <stop offset="1" stopColor="var(--color-grad-a)" stopOpacity="0" />
@@ -511,32 +505,44 @@ export default function HowStage({ toolIds, scene, getT, staticT, use3d, onFrame
             </radialGradient>
           </defs>
           {NET.groups.map((g, i) => (
-            <circle key={g.id} ref={set(R.current.gHalos, i)} cx={g.x} cy={g.y} r={g.r} fill={`url(#how-group${uid})`} style={{ opacity: 0 }} />
+            <circle key={g.id} ref={set(R.current.gHalos, i)} cx={g.x} cy={g.y} r={g.r} fill={`url(#how-group${uid})`} />
           ))}
-          {NET.edges.map((e, i) => (
-            <path
-              key={e.id}
-              ref={set(R.current.edges, i)}
-              d={e.d}
-              fill="none"
-              {...EDGE_STYLE[e.kind]}
-              stroke={e.kind === "hub" ? `url(#how-net-grad${uid})` : EDGE_STYLE[e.kind].stroke}
-              pathLength={1}
-              strokeDasharray="1 1"
-              style={{ strokeDashoffset: 1, opacity: 0 }}
-            />
-          ))}
-          {NET.dots.map((d, i) => (
-            <g key={d.id} ref={set(R.current.netDots, i)} style={{ opacity: 0 }}>
-              <circle cx={d.x} cy={d.y} r="8" fill={`url(#how-dot-glow${uid})`} />
-              <circle cx={d.x} cy={d.y} r="2.4" fill="var(--color-grad-b)" />
-            </g>
-          ))}
+          {NET.edges.map((e) =>
+            e.kind === "minor" ? null : (
+              <path key={e.id} d={e.d} fill="none" {...EDGE_STYLE[e.kind]} stroke={e.kind === "hub" ? `url(#how-net-grad${uid})` : EDGE_STYLE[e.kind].stroke} />
+            ),
+          )}
+          <g ref={(e) => { R.current.minor = e; }}>
+            {NET.edges.map((e) => (e.kind === "minor" ? <path key={e.id} d={e.d} fill="none" {...EDGE_STYLE.minor} /> : null))}
+            {NET.dots.map((d) => (
+              <g key={d.id}>
+                <circle cx={d.x} cy={d.y} r="8" fill={`url(#how-dot-glow${uid})`} />
+                <circle cx={d.x} cy={d.y} r="2.4" fill="var(--color-grad-b)" />
+              </g>
+            ))}
+          </g>
+          {/* Brillos que recorren las líneas al centro y pulsos de luz por las líneas azules */}
           {NET.edges.map((e, i) =>
-            e.kind === "hub" ? (
+            e.shimmer ? (
+              <path
+                key={`s-${e.id}`}
+                ref={set(R.current.shimmers, i)}
+                d={e.d}
+                fill="none"
+                stroke={`url(#how-net-grad${uid})`}
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                pathLength={1}
+                strokeDasharray="0.22 1"
+                style={{ strokeDashoffset: 0.22, opacity: 0 }}
+              />
+            ) : null,
+          )}
+          {NET.edges.map((e, i) =>
+            e.pulse ? (
               <g key={`p-${e.id}`} ref={set(R.current.netPulses, i)} style={{ opacity: 0 }}>
                 <circle r="7" fill={`url(#how-dot-glow${uid})`} />
-                <circle r="2.2" fill="var(--color-fg)" />
+                <circle r="2.4" fill={`url(#how-pulse${uid})`} />
               </g>
             ) : null,
           )}
@@ -548,7 +554,7 @@ export default function HowStage({ toolIds, scene, getT, staticT, use3d, onFrame
             ref={set(R.current.caps, i)}
             data-net-cap
             className="absolute whitespace-nowrap text-[10px] font-semibold uppercase leading-none tracking-[0.12em] text-fg-subtle"
-            style={{ left: g.cap.x, top: g.cap.y, transform: "translate(-50%,-50%)", textShadow: LABEL_HALO, opacity: 0 }}
+            style={{ left: g.cap.x, top: g.cap.y, transform: "translate(-50%,-50%)", textShadow: LABEL_HALO }}
           >
             {g.label}
           </span>
@@ -560,7 +566,7 @@ export default function HowStage({ toolIds, scene, getT, staticT, use3d, onFrame
             ref={set(R.current.pills, i)}
             data-net-pill
             className="absolute flex items-center gap-1.5 whitespace-nowrap rounded-full border border-line-strong bg-glass px-2.5 py-[5px] text-[11px] font-medium leading-none text-fg-muted"
-            style={{ left: pl.x, top: pl.y, transform: "translate(-50%,-50%)", opacity: 0 }}
+            style={{ left: pl.x, top: pl.y, transform: "translate(-50%,-50%)" }}
           >
             <i aria-hidden className="h-1.5 w-1.5 rounded-full bg-brand" style={{ boxShadow: "0 0 6px var(--color-grad-b)" }} />
             {pl.label}
@@ -571,7 +577,7 @@ export default function HowStage({ toolIds, scene, getT, staticT, use3d, onFrame
           const i = TOOLS.findIndex((x) => x.id === nt.id);
           const n = TOOLS[i];
           return (
-            <div key={n.id} ref={set(R.current.chips, i)} className="how-chip absolute" style={{ left: nt.x, top: nt.y, transform: "translate(-50%,-50%)", opacity: 0 }}>
+            <div key={n.id} ref={set(R.current.chips, i)} className="how-chip absolute" style={{ left: nt.x, top: nt.y, transform: "translate(-50%,-50%)" }}>
               <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-fg" style={{ boxShadow: "0 0 0 1px color-mix(in srgb, var(--color-accent) 45%, transparent), 0 0 22px color-mix(in srgb, var(--color-accent) 28%, transparent)" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={`/logos/tools/${n.file}`} alt="" width={n.icon ?? 24} height={n.icon ?? 24} className="object-contain" style={{ width: n.icon ?? 24, height: n.icon ?? 24 }} />
