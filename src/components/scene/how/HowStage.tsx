@@ -418,13 +418,18 @@ export default function HowStage({ toolIds, scene, getT, staticT, use3d, onFrame
         <div key={n.id} ref={set(R.current.chips, i)} className="how-chip absolute left-0 top-0" style={{ opacity: 0.3 }}>
           <div className="flex h-12 w-12 items-center justify-center rounded-full border border-transparent bg-fg [[data-on='1']_&]:border-accent">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`/logos/tools/${n.file}`} alt="" width={24} height={24} className="h-6 w-6" />
+            <img src={`/logos/tools/${n.file}`} alt="" width={n.icon ?? 24} height={n.icon ?? 24} className="object-contain" style={{ width: n.icon ?? 24, height: n.icon ?? 24 }} />
           </div>
           <span
             ref={set(R.current.labels, i)}
             className="absolute left-1/2 top-full mt-1.5 w-max max-w-[92px] -translate-x-1/2 px-1 text-center text-[13px] leading-tight text-fg-muted"
           >
-            {n.name}
+            {n.short ? (
+              <>
+                <span className="md:hidden">{n.short}</span>
+                <span className="max-md:hidden">{n.name}</span>
+              </>
+            ) : n.name}
           </span>
         </div>
       ))}

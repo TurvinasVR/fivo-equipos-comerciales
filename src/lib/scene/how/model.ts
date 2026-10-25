@@ -47,8 +47,9 @@ export function makeLayout(W: number, H: number): Layout {
     const unit = Math.min(W / 9, H / 10.2);
     // Óvalo que aprovecha el escenario sin salirse: en vertical deja sitio al icono y a su etiqueta (1,6 unidades) y en
     // horizontal a media etiqueta larga (1,4). En móvil (escenario alto) sale un óvalo alto; en tableta (escenario
-    // apaisado y bajo) uno ancho, y entonces el anillo gira 90° (ver `turn`).
-    const RY = Math.min(5.7, (H / 2 / unit - 1.6) / 0.8);
+    // apaisado y bajo) uno ancho, y entonces el anillo gira 90° (ver `turn`). Por debajo de 390 px el escenario del
+    // paso 1 es aún más alto (3:5,5) y el óvalo puede estirarse más para que los 11 nodos no se pisen.
+    const RY = Math.min(H / W > 1.7 ? 8.5 : 7.2, (H / 2 / unit - 1.6) / 0.8);
     const RX = Math.min(6.4, (W / 2 / unit - 1.4) / 0.86);
     const turn = RX * 0.86 > RY * 0.8;
     return {
@@ -63,7 +64,7 @@ export function makeLayout(W: number, H: number): Layout {
   const unit = Math.min(W / 8.8, H / 6.4);
   return {
     // Óvalo apaisado: el anillo gira 90° como en tableta, con las etiquetas largas arriba y abajo
-    W, H, unit, compact, RX: 3.15, RY: 2.3, turn: true, sway: 0.42,
+    W, H, unit, compact, RX: 3.15, RY: 2.6, turn: true, sway: 0.42,
     center: { x: 0, y: 0, s: 1 },
     corner: { x: 2.35, y: 1.75, s: 0.4 },
     right: { x: 2.2, y: 0, s: 0.68 },

@@ -54,7 +54,7 @@ export function projectHero(n: GNode) {
   return { x: 800 + n.x * s * 58, y: 450 + n.y * s * 58, s };
 }
 
-export type ToolId = "zoom" | "meet" | "teams" | "hubspot" | "highlevel" | "slack" | "notion" | "drive" | "claude" | "chatgpt" | "zapier";
+export type ToolId = "zoom" | "meet" | "teams" | "hubspot" | "highlevel" | "salesforce" | "slack" | "notion" | "drive" | "claude" | "chatgpt" | "zapier";
 
 export type ToolNode = {
   id: ToolId;
@@ -62,6 +62,10 @@ export type ToolNode = {
   file: string;
   /** Qué aporta a la memoria de Fivo. */
   gives: string;
+  /** Lado del icono en px dentro del círculo de 48 px (por defecto 24); más grande para logos anchos como Salesforce. */
+  icon?: number;
+  /** Nombre corto para la etiqueta en móvil, donde el grafo va más apretado. */
+  short?: string;
   mcp?: boolean;
   /** Posición normalizada en el óvalo (-1 a 1) y profundidad. */
   u: number;
@@ -73,10 +77,12 @@ const DEFS: Record<ToolId, Omit<ToolNode, "id" | "u" | "v" | "z">> = {
   hubspot: { name: "HubSpot", file: "hubspot.svg", gives: "CRM" },
   // Icono oficial (solo las flechas) del kit de marca de HighLevel, agosto de 2025
   highlevel: { name: "GoHighLevel", file: "gohighlevel.svg", gives: "CRM" },
+  // Logo oficial de salesforce.com; la nube es ancha, así que va a 34 px, como en el diagrama del problema
+  salesforce: { name: "Salesforce", file: "salesforce.svg", gives: "CRM", icon: 34 },
   claude: { name: "Claude", file: "claude.svg", gives: "Tu IA", mcp: true },
   zoom: { name: "Zoom", file: "zoom.svg", gives: "Llamadas" },
   meet: { name: "Google Meet", file: "googlemeet.svg", gives: "Llamadas" },
-  teams: { name: "Microsoft Teams", file: "teams.svg", gives: "Llamadas" },
+  teams: { name: "Microsoft Teams", short: "Teams", file: "teams.svg", gives: "Llamadas" },
   slack: { name: "Slack", file: "slack.svg", gives: "Mensajes" },
   notion: { name: "Notion", file: "notion.svg", gives: "Documentos" },
   drive: { name: "Google Drive", file: "googledrive.svg", gives: "Documentos" },
@@ -89,7 +95,7 @@ const DEFS: Record<ToolId, Omit<ToolNode, "id" | "u" | "v" | "z">> = {
  * corta van arriba y abajo, donde los vecinos quedan lado a lado; las largas (Microsoft Teams, Google Meet, Google Drive,
  * GoHighLevel) en los lados, donde los vecinos quedan uno encima de otro y la etiqueta tiene sitio debajo.
  */
-export const TOOL_IDS_DEFAULT: ToolId[] = ["hubspot", "claude", "teams", "meet", "zoom", "slack", "notion", "drive", "highlevel", "chatgpt"];
+export const TOOL_IDS_DEFAULT: ToolId[] = ["hubspot", "salesforce", "teams", "meet", "zoom", "slack", "notion", "drive", "highlevel", "claude", "chatgpt"];
 
 const toolCache = new Map<string, ToolNode[]>();
 

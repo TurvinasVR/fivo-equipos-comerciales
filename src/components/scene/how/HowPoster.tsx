@@ -10,11 +10,14 @@ import { STATIC_T, computeState, makeLayout } from "@/lib/scene/how/model";
  * geometría (el mismo modelo), así que no hay salto de diseño.
  */
 const SIZES = { wide: { W: 720, H: 540 }, compact: { W: 350, H: 500 } } as const;
+/** El paso 1 tiene un escenario más alto (ver HowItWorks): mismas proporciones aquí para que no haya salto. */
+const SIZES_STEP1 = { wide: { W: 720, H: 720 }, compact: { W: 350, H: 583 } } as const;
 
 const Dot = ({ tone }: { tone: "win" | "lose" }) => <i aria-hidden className={`status-dot ${tone === "lose" ? "text-danger" : "text-success"}`} />;
 
 export function HowPoster({ k, toolIds, scene, compact = false }: { k: 0 | 1 | 2; toolIds: ToolId[]; scene: HowScene; compact?: boolean }) {
-  const { W, H } = compact ? SIZES.compact : SIZES.wide;
+  const sizes = k === 0 ? SIZES_STEP1 : SIZES;
+  const { W, H } = compact ? sizes.compact : sizes.wide;
   const L = makeLayout(W, H);
   const tools = toolsFor(toolIds);
   const st = computeState(STATIC_T[k], 0, L, true, tools);
@@ -61,10 +64,10 @@ export function HowPoster({ k, toolIds, scene, compact = false }: { k: 0 | 1 | 2
           return (
             <g key={n.id} opacity={0.3 + 0.7 * n.lineP}>
               <circle cx={n.sx} cy={n.sy} r={24 * sc} fill="var(--color-fg)" />
-              <image href={`/logos/tools/${t.file}`} x={n.sx - 12 * sc} y={n.sy - 12 * sc} width={24 * sc} height={24 * sc} />
+              <image href={`/logos/tools/${t.file}`} x={n.sx - ((t.icon ?? 24) / 2) * sc} y={n.sy - ((t.icon ?? 24) / 2) * sc} width={(t.icon ?? 24) * sc} height={(t.icon ?? 24) * sc} />
               {stepOne > 0 && (
                 <text x={n.sx} y={n.sy + 24 * sc + 15} textAnchor="middle" fontSize="13" fill="var(--color-fg-muted)" opacity={stepOne * n.lineP}>
-                  {t.name}
+                  {compact ? (t.short ?? t.name) : t.name}
                 </text>
               )}
             </g>

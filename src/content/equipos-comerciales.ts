@@ -35,7 +35,7 @@ export const equiposComerciales: LandingContent = {
 
   /** Herramientas del grafo de "Cómo funciona". */
   tools: {
-    ids: ["hubspot", "claude", "teams", "meet", "zoom", "slack", "notion", "drive", "highlevel", "chatgpt"],
+    ids: ["hubspot", "salesforce", "teams", "meet", "zoom", "slack", "notion", "drive", "highlevel", "claude", "chatgpt"],
   },
 
   problem: {
@@ -100,7 +100,7 @@ export const equiposComerciales: LandingContent = {
     steps: [
       {
         title: "Conectas tus herramientas.",
-        desc: "Escena animada: los logotipos de Zoom, Google Meet, Microsoft Teams, HubSpot, GoHighLevel, Slack, Notion, Google Drive, Claude y ChatGPT aparecen sueltos y se van conectando uno a uno con el nodo central de Fivo, hasta formar un grafo unido.",
+        desc: "Escena animada: los logotipos de Zoom, Google Meet, Microsoft Teams, HubSpot, GoHighLevel, Salesforce, Slack, Notion, Google Drive, Claude y ChatGPT aparecen sueltos y se van conectando uno a uno con el nodo central de Fivo, hasta formar un grafo unido.",
       },
       {
         title: "Cada llamada entra en el grafo: qué objeciones salieron, cómo se respondieron y qué se acordó.",

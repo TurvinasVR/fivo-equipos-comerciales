@@ -208,7 +208,8 @@ export function HowItWorks() {
                     <HowPhoneCard k={k as 1 | 2} scene={how.scene} />
                   </div>
                 )}
-                <div className={`relative aspect-[7/10] w-full md:col-span-8 md:aspect-[4/3] ${k > 0 ? "max-md:hidden" : ""}`}>
+                {/* El paso 1 (el grafo de 11 herramientas) tiene un escenario más alto para que los nodos no se junten */}
+                <div className={`relative w-full md:col-span-8 ${k === 0 ? "aspect-[3/5] max-[389px]:aspect-[3/5.5] md:aspect-square" : "aspect-[7/10] md:aspect-[4/3] max-md:hidden"}`}>
                   {stage(`step${k}`, k as 0 | 1 | 2, true)}
                   {early && !sticky && !(phone && k > 0) && (
                     <div className="absolute inset-0" style={{ opacity: ready[`step${k}`] ? 1 : 0 }}>
