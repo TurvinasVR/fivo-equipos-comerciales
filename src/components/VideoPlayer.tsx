@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowCounterClockwise, Pause, Play } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, Play } from "@phosphor-icons/react";
 import { siteConfig } from "@/config/site";
 import type { LandingSlug } from "@/content/types";
 import { track, trackOnce } from "@/lib/analytics";
@@ -182,15 +182,14 @@ export function VideoPlayer({
         style={{ opacity: framed ? 0 : 1 }}
       />
 
-      {/* Superficie principal: reproducir o pausar */}
+      {/* Único control: todo el vídeo es un botón (con teclado, Espacio o Enter). Reproduciendo no se ve nada encima; en
+          pausa o antes de empezar sale el botón grande del centro */}
       <button
         type="button"
         onClick={togglePlay}
-        // Antes de empezar es el único botón (el pequeño aún no está), así que se alcanza también con el teclado
-        tabIndex={started ? -1 : 0}
         inert={ended || undefined}
         className="absolute inset-0 z-10 flex cursor-pointer items-center justify-center bg-transparent"
-        aria-label={playing ? "Pausar el vídeo" : "Reproducir el vídeo"}
+        aria-label={playing ? "Pausar vídeo" : "Reproducir vídeo"}
       >
         {showBigPlay && (
           <span className="flex h-16 w-16 items-center justify-center rounded-full bg-fg text-bg transition-transform duration-200 sm:h-20 sm:w-20">
@@ -198,20 +197,6 @@ export function VideoPlayer({
           </span>
         )}
       </button>
-
-      {/* Control: reproducir y pausar. Solo cuando el vídeo ya ha empezado: antes, el único botón es el grande del centro */}
-      {started && (
-        <div inert={ended || undefined} className="absolute right-2 top-2 z-20 flex items-center gap-0.5 rounded-full bg-glass p-0.5 backdrop-blur-sm sm:right-3 sm:top-3">
-          <button
-            type="button"
-            onClick={togglePlay}
-            className="flex h-11 w-11 items-center justify-center rounded-full text-fg hover:bg-fg/15"
-            aria-label={playing ? "Pausar" : "Reproducir"}
-          >
-            {playing ? <Pause size={20} weight="fill" aria-hidden /> : <Play size={20} weight="fill" aria-hidden />}
-          </button>
-        </div>
-      )}
 
       <div className="absolute inset-x-0 bottom-0 z-20 h-[3px] bg-fg/15" aria-hidden>
         <div className="bg-brand-x h-full" style={{ width: `${progress * 100}%` }} />
