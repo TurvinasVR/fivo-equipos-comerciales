@@ -99,11 +99,23 @@ export function HowItWorks() {
 
   /* ---------- móvil y estático: cada paso con su escena */
   const stepEls = useRef<(HTMLElement | null)[]>([]);
+  const graphStage = useRef<HTMLDivElement | null>(null);
   const getTStep = (k: number) => () => {
+    const vh = window.innerHeight;
+    // Móvil, paso 1: el grafo es casi tan alto como la pantalla, así que se mide por el propio escenario. Los nodos empiezan
+    // a conectarse cuando asoma por abajo y terminan cuando queda centrado entre la barra superior y el botón fijo, con los
+    // 11 a la vista.
+    const g = graphStage.current;
+    if (k === 0 && g && window.matchMedia(PHONE_QUERY).matches) {
+      const r = g.getBoundingClientRect();
+      const barBottom = Math.max(0, document.querySelector(".topbar")?.getBoundingClientRect().bottom ?? 0);
+      const ctaTop = Math.min(vh, document.querySelector(".sticky-cta")?.getBoundingClientRect().top ?? vh);
+      const centeredTop = (barBottom + ctaTop - r.height) / 2;
+      return clamp01((vh - r.top) / Math.max(1, vh - centeredTop));
+    }
     const el = stepEls.current[k];
     if (!el) return k;
     const r = el.getBoundingClientRect();
-    const vh = window.innerHeight;
     return k + clamp01((vh * 0.9 - r.top) / (r.height + vh * 0.5));
   };
 
@@ -209,7 +221,9 @@ export function HowItWorks() {
                   </div>
                 )}
                 {/* El paso 1 (el grafo de 11 herramientas) tiene un escenario más alto para que los nodos no se junten */}
-                <div className={`relative w-full md:col-span-8 ${k === 0 ? "aspect-[3/5] max-[389px]:aspect-[3/5.5] md:aspect-square" : "aspect-[7/10] md:aspect-[4/3] max-md:hidden"}`}>
+                <div
+                  ref={k === 0 ? graphStage : undefined}
+                  className={`relative w-full md:col-span-8 ${k === 0 ? "aspect-[3/5] max-[389px]:aspect-[3/5.5] md:aspect-square" : "aspect-[7/10] md:aspect-[4/3] max-md:hidden"}`}>
                   {stage(`step${k}`, k as 0 | 1 | 2, true)}
                   {early && !sticky && !(phone && k > 0) && (
                     <div className="absolute inset-0" style={{ opacity: ready[`step${k}`] ? 1 : 0 }}>
