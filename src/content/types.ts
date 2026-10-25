@@ -39,7 +39,8 @@ export type ProblemGroup = {
   /** Tamaño del anillo discontinuo y distancia de su etiqueta. */
   ring: [number, number];
   labelTop: number;
-  nodes: { f: string; dx: number; dy: number }[];
+  /** `size`: lado del icono en px dentro del círculo (por defecto 24); más grande para logos anchos como el de Salesforce. */
+  nodes: { f: string; dx: number; dy: number; size?: number }[];
 };
 
 export type AskAnswer =

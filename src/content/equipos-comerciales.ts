@@ -64,11 +64,13 @@ export const equiposComerciales: LandingContent = {
         label: "CRM",
         cx: 0.76,
         cy: 0.24,
-        ring: [150, 96],
+        ring: [224, 96],
         labelTop: 58,
         nodes: [
-          { f: "hubspot.svg", dx: -30, dy: 0 },
-          { f: "gohighlevel.svg", dx: 30, dy: 0 },
+          { f: "hubspot.svg", dx: -60, dy: 0 },
+          { f: "gohighlevel.svg", dx: 0, dy: 0 },
+          // Logo oficial de Salesforce (salesforce.com): nube ancha, un poco más grande para que pese como los demás
+          { f: "salesforce.svg", dx: 60, dy: 0, size: 34 },
         ],
       },
       {

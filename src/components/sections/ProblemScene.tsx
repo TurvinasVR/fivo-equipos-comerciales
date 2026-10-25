@@ -123,7 +123,7 @@ function Field({ problem, mode, active, instant = false, label }: { problem: Pro
             }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`/logos/tools/${n.f}`} alt="" width={24} height={24} className="h-6 w-6" />
+            <img src={`/logos/tools/${n.f}`} alt="" width={n.size ?? 24} height={n.size ?? 24} className="object-contain" style={{ width: n.size ?? 24, height: n.size ?? 24 }} />
           </span>
         );
       })}
