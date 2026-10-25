@@ -72,6 +72,8 @@ export function AnalyticsLoader() {
       fbq.version = "2.0";
       fbq.queue = [];
       window.fbq = fbq as unknown as NonNullable<Window["fbq"]>;
+      // Como el snippet oficial: sin _fbq, fbevents.js avisa de "varios píxeles con versiones distintas"
+      if (!window._fbq) window._fbq = fbq;
       loadScript("https://connect.facebook.net/en_US/fbevents.js");
       window.fbq("init", metaPixelId);
       window.fbq("track", "PageView");
