@@ -1,5 +1,27 @@
 @import "tailwindcss";
 
+/* Repuesto de Satoshi mientras carga (ver layout.tsx): Arial Bold escalada a la anchura media de cada cara de Satoshi
+   (Black 900: +0,85 %; Bold 700: -4,5 %, ajustadas para que los titulares caigan en las mismas líneas) y con su ascendente y
+   descendente (101 % y 24 % del cuerpo, divididos entre size-adjust). */
+@font-face {
+  font-family: "Satoshi Fallback";
+  src: local("Arial Bold"), local("Arial-BoldMT"), local("Helvetica Bold"), local("Helvetica-Bold");
+  font-weight: 900;
+  size-adjust: 100.85%;
+  ascent-override: 100.15%;
+  descent-override: 23.8%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Satoshi Fallback";
+  src: local("Arial Bold"), local("Arial-BoldMT"), local("Helvetica Bold"), local("Helvetica-Bold");
+  font-weight: 700;
+  size-adjust: 95.5%;
+  ascent-override: 105.8%;
+  descent-override: 25.1%;
+  line-gap-override: 0%;
+}
+
 /* Sistema de diseño de Fivo (ver DESIGN.md). Un solo tema: oscuro, bloqueado.
    Todo color sale de aquí. Las escenas WebGL leen los mismos valores de src/lib/scene/tokens.ts. */
 @theme {

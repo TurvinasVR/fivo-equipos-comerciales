@@ -23,9 +23,13 @@ const satoshi = localFont({
     { path: "./fonts/satoshi-900.woff2", weight: "900", style: "normal" },
   ],
   display: "swap",
-  // Sin precarga: el titular se pinta con la fuente de repuesto (ajustada, sin salto) y la sustituye al llegar.
-  // Así los 48 KB de las dos caras no compiten con el póster y el JavaScript de la primera pantalla.
+  // Sin precarga: el titular se pinta con la fuente de repuesto y la sustituye al llegar. Así los 48 KB de las dos caras
+  // no compiten con el póster y el JavaScript de la primera pantalla. La de repuesto es Arial Bold con las medidas de
+  // Satoshi ("Satoshi Fallback", globals.css): ocupa el mismo ancho y alto, el titular cae en las mismas líneas y no hay
+  // salto. La que genera next/font (Arial normal) era más estrecha y en escritorio el titular pasaba de 2 líneas a 1.
   preload: false,
+  adjustFontFallback: false,
+  fallback: ["Satoshi Fallback", "Arial", "sans-serif"],
   variable: "--font-satoshi",
 });
 
