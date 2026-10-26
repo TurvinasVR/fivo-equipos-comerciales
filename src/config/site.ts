@@ -50,7 +50,7 @@ const env = {
  * Las variables NEXT_PUBLIC_VIDEO_* siguen mandando si se rellenan (p. ej. para servirlo desde fuera); con una URL
  * propia no se usa la versión móvil local, que sería de otro vídeo.
  */
-const VSL = { src: "/video/vsl-01.mp4", mobileSrc: "/video/vsl-01-720.mp4", poster: "/img/vsl-01-poster.webp" };
+const VSL = { src: "/video/vsl-01.mp4", mobileSrc: "/video/vsl-01-720.mp4", poster: "/img/vsl-01-miniatura.webp" };
 
 /** Vídeo y miniatura de cada landing. */
 const landingRuntime = (): LandingRuntime => ({

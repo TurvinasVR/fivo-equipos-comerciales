@@ -10,7 +10,8 @@ import { CtaButton } from "./CtaButton";
 import { CtaHint } from "./CtaBlock";
 
 /**
- * El VSL empieza en el segundo 1 (el póster es ese mismo fotograma, así que el paso del póster al vídeo no se nota).
+ * El VSL empieza en el segundo 1. Antes de reproducir se ve la miniatura (póster); al empezar se funde con el vídeo y ya
+ * no vuelve: en pausa se ve el fotograma donde se paró.
  * Se pide con un fragmento de medio (#t=1, lo entienden Safari, Chrome y Firefox) y, por si acaso, se fija currentTime
  * al cargar los metadatos, antes de que empiece. Los archivos de vídeo no cambian.
  */
